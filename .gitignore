@@ -1,0 +1,21 @@
+# Nuxt
+.nuxt/
+.output/
+dist/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# Capacitor
+android/
+ios/
+*.keystore
+
+# Misc
+.DS_Store
+*.log

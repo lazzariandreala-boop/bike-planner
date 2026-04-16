@@ -1,0 +1,237 @@
+/* =============================================
+   GravelAI — Main Stylesheet
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Dark slate base */
+  --terrain-950: #060810;
+  --terrain-900: #0d0f18;
+  --terrain-800: #12141f;
+  --terrain-700: #181b2a;
+  --terrain-600: #232640;
+  --terrain-500: #3d4470;
+  --terrain-400: #5a6490;
+  /* Accents */
+  --moss-400: #a3e635;
+  --moss-500: #84cc16;
+  --moss-600: #65a30d;
+  --amber-400: #f59e0b;
+  --amber-500: #d97706;
+  /* Text */
+  --parchment-50:  #f8fafc;
+  --parchment-100: #e2eaf5;
+  --parchment-200: #8b95a8;
+  --parchment-300: #404860;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #__nuxt {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--terrain-900);
+  color: var(--parchment-100);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.topo-bg {
+  background-color: var(--terrain-900);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='40' fill='none' stroke='%231e2130' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%231e2130' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='20' fill='none' stroke='%231e2130' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='10' fill='none' stroke='%231e2130' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
+.font-display { font-family: 'Bebas Neue', cursive; letter-spacing: 0.05em; }
+.font-mono    { font-family: 'IBM Plex Mono', monospace; }
+
+/* Leaflet */
+.leaflet-container {
+  font-family: 'DM Sans', sans-serif !important;
+  background: var(--terrain-900) !important;
+}
+.leaflet-popup-content-wrapper {
+  background: var(--terrain-800) !important;
+  color: var(--parchment-100) !important;
+  border: 1px solid var(--terrain-600) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+.leaflet-popup-tip { background: var(--terrain-800) !important; }
+.leaflet-bar a {
+  background: var(--terrain-800) !important;
+  color: var(--parchment-100) !important;
+  border-color: var(--terrain-600) !important;
+}
+.leaflet-bar a:hover { background: var(--terrain-700) !important; }
+.leaflet-control-attribution {
+  background: rgba(13,15,24,0.8) !important;
+  color: var(--parchment-200) !important;
+  font-size: 10px !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--terrain-900); }
+::-webkit-scrollbar-thumb { background: var(--terrain-600); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--terrain-500); }
+
+/* Transitions */
+.page-enter-active, .page-leave-active { transition: opacity 0.2s ease; }
+.page-enter-from, .page-leave-to { opacity: 0; }
+
+/* Glass card */
+.glass-card {
+  background: rgba(18, 20, 31, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(35, 38, 64, 0.8);
+}
+
+/* Input */
+.input-terrain {
+  background: var(--terrain-700);
+  border: 1px solid var(--terrain-600);
+  color: var(--parchment-100);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-terrain:focus {
+  border-color: var(--moss-400);
+  box-shadow: 0 0 0 3px rgba(163,230,53,0.1);
+}
+.input-terrain::placeholder { color: var(--terrain-400); }
+
+/* Buttons */
+.btn-primary {
+  background: var(--moss-400);
+  color: #060810;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover {
+  background: var(--moss-500);
+  box-shadow: 0 4px 16px rgba(163,230,53,0.3);
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--parchment-200);
+  border: 1px solid var(--terrain-600);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-ghost:hover {
+  background: var(--terrain-700);
+  border-color: var(--terrain-500);
+  color: var(--parchment-100);
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--terrain-700);
+  color: var(--parchment-200);
+  border: 1px solid var(--terrain-600);
+}
+.chip-moss {
+  background: rgba(163,230,53,0.12);
+  color: var(--moss-400);
+  border-color: rgba(163,230,53,0.3);
+}
+.chip-amber {
+  background: rgba(245,158,11,0.12);
+  color: var(--amber-400);
+  border-color: rgba(245,158,11,0.3);
+}
+
+/* Spinner */
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--terrain-600);
+  border-top-color: var(--moss-400);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Surface bar */
+.surface-bar {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1px;
+}
+
+/* Drag handle */
+.drag-handle {
+  width: 40px; height: 4px;
+  background: var(--terrain-600);
+  border-radius: 2px;
+  margin: 12px auto 4px;
+  flex-shrink: 0;
+  cursor: grab;
+  transition: background 0.2s;
+}
+.drag-handle:hover { background: var(--terrain-400); }
+
+/* Side panel (desktop) + bottom sheet (mobile) */
+.side-panel {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  width: 380px;
+  background: var(--terrain-900);
+  border-right: 1px solid var(--terrain-700);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .side-panel {
+    width: 100%;
+    top: auto;
+    left: 0; right: 0;
+    bottom: calc(58px + env(safe-area-inset-bottom));
+    height: 180px; /* overridden by JS */
+    border-right: none;
+    border-top: 1px solid var(--terrain-600);
+    border-radius: 20px 20px 0 0;
+    background: var(--terrain-900);
+    transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .side-panel.dragging {
+    transition: none;
+  }
+}
