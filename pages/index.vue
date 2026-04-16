@@ -92,12 +92,6 @@
       </p>
     </div>
 
-    <!-- Footer tecnico -->
-    <div class="absolute bottom-4 left-0 right-0 text-center">
-      <p class="font-mono text-xs" style="color: #2a4a2a;">
-        POWERED BY OPENROUTESERVICE · FIREBASE · CLAUDE AI
-      </p>
-    </div>
   </div>
 </template>
 
