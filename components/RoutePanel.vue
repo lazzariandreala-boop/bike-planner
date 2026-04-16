@@ -6,7 +6,8 @@
   >
     <!-- Drag handle (mobile only) -->
     <div
-      class="drag-handle-area md:hidden"
+      v-if="isMobile"
+      class="drag-handle-area"
       @touchstart.passive="onTouchStart"
       @touchmove.prevent="onTouchMove"
       @touchend="onTouchEnd"

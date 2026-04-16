@@ -360,18 +360,22 @@ const confirmSave = async () => {
   if (!routesStore.currentRoute || !saveForm.name) return
   const route = routesStore.currentRoute
 
-  await routesStore.saveRoute({
-    ...route,
-    name: saveForm.name,
-    description: saveForm.notes,
-    aiDescription: route.aiDescription,
-    isFavorite: false,
-    tags: saveForm.tagsInput.split(',').map(t => t.trim()).filter(Boolean),
-    waypoints: routesStore.waypoints,
-  } as any)
-
-  showSaveDialog.value = false
-  showToast('Percorso salvato!', 'success')
+  try {
+    await routesStore.saveRoute({
+      ...route,
+      name: saveForm.name,
+      description: saveForm.notes,
+      aiDescription: route.aiDescription,
+      isFavorite: false,
+      tags: saveForm.tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+      waypoints: routesStore.waypoints,
+    } as any)
+    showSaveDialog.value = false
+    showToast('Percorso salvato!', 'success')
+  } catch (e: any) {
+    console.error('[Save]', e)
+    showToast(e?.message || 'Errore nel salvataggio', 'error')
+  }
 }
 
 // =============================================
