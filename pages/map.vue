@@ -25,22 +25,22 @@
       />
 
       <!-- Toolbar mappa (destra) -->
-      <div class="map-toolbar">
-        <button class="map-btn" @click="goToMyLocation">
+      <div class="map-toolbar" @click.stop>
+        <button class="map-btn" @click.stop="goToMyLocation">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
             <path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
           <span>Posizione</span>
         </button>
-        <button class="map-btn" :class="{ 'active': showCycleMap }" @click="toggleCycleMap">
+        <button class="map-btn" :class="{ 'active': showCycleMap }" @click.stop="toggleCycleMap">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="4" cy="11" r="2.5" stroke="currentColor" stroke-width="1.3"/>
             <circle cx="12" cy="11" r="2.5" stroke="currentColor" stroke-width="1.3"/>
             <path d="M4 11L8 4l4 7" stroke="currentColor" stroke-width="1.3"/>
             <path d="M6 7h4" stroke="currentColor" stroke-width="1.3"/>
           </svg>
-          <span>Ciclabili</span>
+          <span>{{ showCycleMap ? 'Ciclabili ✓' : 'Ciclabili' }}</span>
         </button>
       </div>
 
@@ -428,7 +428,7 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  z-index: 500;
+  z-index: 900;
 }
 
 @media (max-width: 768px) {
