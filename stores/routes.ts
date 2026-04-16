@@ -51,12 +51,22 @@ export const useRoutesStore = defineStore('routes', () => {
         orderBy('createdAt', 'desc')
       )
       const snap = await getDocs(q)
-      routes.value = snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: (d.data().createdAt as Timestamp)?.toDate?.() || new Date(),
-        updatedAt: (d.data().updatedAt as Timestamp)?.toDate?.() || new Date(),
-      })) as SavedRoute[]
+      routes.value = snap.docs.map(d => {
+        const data = d.data()
+        return {
+          id: d.id,
+          ...data,
+          geometry: typeof data.geometry === 'string' ? JSON.parse(data.geometry) : data.geometry,
+          elevation: data.elevation ? {
+            ...data.elevation,
+            profile: typeof data.elevation.profile === 'string'
+              ? JSON.parse(data.elevation.profile)
+              : (data.elevation.profile ?? []),
+          } : null,
+          createdAt: (data.createdAt as Timestamp)?.toDate?.() || new Date(),
+          updatedAt: (data.updatedAt as Timestamp)?.toDate?.() || new Date(),
+        }
+      }) as SavedRoute[]
     } finally {
       loadingRoutes.value = false
     }
@@ -68,8 +78,19 @@ export const useRoutesStore = defineStore('routes', () => {
 
     try {
       const db = $firebase.db
+      // Firestore non supporta array annidati → serializziamo geometry e elevation profile
+      const { geometry, elevation, waypoints, ...rest } = route
       const docRef = await addDoc(collection(db, 'routes'), {
-        ...route,
+        ...rest,
+        geometry: geometry ? JSON.stringify(geometry) : null,
+        elevation: elevation ? {
+          gain: elevation.gain,
+          loss: elevation.loss,
+          max: elevation.max,
+          min: elevation.min,
+          profile: JSON.stringify(elevation.profile ?? []),
+        } : null,
+        waypoints: (waypoints ?? []).map(w => ({ lat: w.lat, lng: w.lng, address: w.address ?? '' })),
         userId: authStore.user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
