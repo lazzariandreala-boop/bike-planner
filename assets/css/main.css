@@ -209,13 +209,14 @@ body {
   position: absolute;
   top: 0; left: 0;
   height: 100%;
-  width: 380px;
+  width: 360px; /* fallback — overridden by inline style on desktop */
   background: var(--terrain-900);
   border-right: 1px solid var(--terrain-700);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @media (max-width: 768px) {

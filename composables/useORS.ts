@@ -8,20 +8,26 @@ import type {
 } from '~/types'
 
 // Mapping superficie → configurazione ORS
+// cycling-regular: segue infrastruttura ciclistica dedicata (piste ciclabili, percorsi protetti)
+// cycling-mountain: ottimizzato per fondi non asfaltati, sterrato, ghiaia
+// cycling-road: ciclismo sportivo su strada, preferisce asfalto e velocità — NON usare per ciclabili
+//
+// green (0-1): preferisce percorsi naturali/parchi
+// quiet (0-1): evita strade trafficate — con cycling-regular forza piste ciclabili
 const SURFACE_ORS_CONFIG: Record<SurfaceType, {
   profile: 'cycling-mountain' | 'cycling-road' | 'cycling-regular'
   green: number
   quiet: number
 }> = {
-  cycleway:    { profile: 'cycling-road',     green: 0.3, quiet: 0.8 },
-  gravel:      { profile: 'cycling-mountain', green: 0.9, quiet: 0.7 },
-  unpaved:     { profile: 'cycling-mountain', green: 0.8, quiet: 0.6 },
-  dirt:        { profile: 'cycling-mountain', green: 0.9, quiet: 0.5 },
-  grass:       { profile: 'cycling-mountain', green: 1.0, quiet: 0.4 },
-  asphalt:     { profile: 'cycling-road',     green: 0.0, quiet: 0.3 },
-  concrete:    { profile: 'cycling-road',     green: 0.0, quiet: 0.3 },
-  cobblestone: { profile: 'cycling-regular',  green: 0.2, quiet: 0.5 },
-  sand:        { profile: 'cycling-mountain', green: 0.7, quiet: 0.3 },
+  cycleway:    { profile: 'cycling-regular', green: 0.2, quiet: 1.0 },  // cycling-regular + max quiet = piste ciclabili dedicate
+  gravel:      { profile: 'cycling-mountain', green: 0.9, quiet: 0.5 },
+  unpaved:     { profile: 'cycling-mountain', green: 0.8, quiet: 0.4 },
+  dirt:        { profile: 'cycling-mountain', green: 0.9, quiet: 0.3 },
+  grass:       { profile: 'cycling-mountain', green: 1.0, quiet: 0.2 },
+  asphalt:     { profile: 'cycling-road',     green: 0.0, quiet: 0.0 },
+  concrete:    { profile: 'cycling-road',     green: 0.0, quiet: 0.0 },
+  cobblestone: { profile: 'cycling-regular',  green: 0.1, quiet: 0.3 },
+  sand:        { profile: 'cycling-mountain', green: 0.7, quiet: 0.2 },
 }
 
 const SURFACE_LABELS: Record<SurfaceType, { it: string; icon: string; color: string }> = {
@@ -46,25 +52,22 @@ export const useORS = () => {
   const error = ref<string | null>(null)
 
   /**
-   * Calcola il profilo e i pesi ORS in base all'ordine di preferenza superfici
+   * Calcola il profilo e i pesi ORS in base alla superficie con priorità più alta.
+   *
+   * Usiamo solo surfaces[0] per profile/green/quiet: l'obiettivo è spingere ORS
+   * al MASSIMO verso la preferenza primaria dell'utente. Le superfici successive
+   * sono fallback naturali — se la superficie primaria non è disponibile nel tratto,
+   * ORS trova comunque un percorso senza che noi diluiamo il segnale primario.
+   *
+   * Mediare i valori delle altre superfici riduce l'efficacia: es. cycleway (quiet=1.0)
+   * + asphalt (quiet=0.0) → quiet=0.67, meno pressione sulle ciclabili del necessario.
    */
   const buildORSConfig = (surfaces: SurfaceType[]) => {
-    // La superficie più preferita (index 0) determina il profilo principale
-    const primary = surfaces[0]
-    const primaryConfig = SURFACE_ORS_CONFIG[primary]
-
-    // Fai una media pesata dei primi 3 per i weightings
-    const topSurfaces = surfaces.slice(0, 3)
-    const weights = topSurfaces.map((s, i) => ({ ...SURFACE_ORS_CONFIG[s], weight: 1 / (i + 1) }))
-    const totalWeight = weights.reduce((a, b) => a + b.weight, 0)
-
-    const green = weights.reduce((a, b) => a + b.green * b.weight, 0) / totalWeight
-    const quiet = weights.reduce((a, b) => a + b.quiet * b.weight, 0) / totalWeight
-
+    const primary = SURFACE_ORS_CONFIG[surfaces[0]]
     return {
-      profile: primaryConfig.profile,
-      green: Math.round(green * 10) / 10,
-      quiet: Math.round(quiet * 10) / 10,
+      profile: primary.profile,
+      green: primary.green,
+      quiet: primary.quiet,
     }
   }
 
@@ -99,13 +102,33 @@ export const useORS = () => {
       const avoidFeatures: ORSRouteRequest['options']['avoid_features'] = []
       if (preferences.avoidFerries) avoidFeatures.push('ferries')
 
-      const body = {
+      const wantsFlat      = preferences.difficulty === 'easy' || preferences.difficulty === 'moderate'
+      const wantsCycleway  = preferences.surfaces[0] === 'cycleway'
+      // Richiediamo alternative se vogliamo piatto o ciclabili — poi scegliamo la migliore
+      const needsAlternatives = wantsFlat || wantsCycleway
+
+      const body: any = {
         coordinates,
-        options: avoidFeatures.length ? { avoid_features: avoidFeatures } : undefined,
+        options: {
+          ...(avoidFeatures.length ? { avoid_features: avoidFeatures } : {}),
+          profile_params: {
+            weightings: {
+              green: orsConfig.green,
+              quiet: orsConfig.quiet,
+            },
+          },
+        },
+        ...(needsAlternatives ? {
+          alternative_routes: {
+            target_count: 3,
+            weight_factor: 5.0,  // considera percorsi fino a 5x più lunghi — necessario per trovare le ciclabili
+            share_factor: 0.2,   // le alternative devono essere molto diverse tra loro
+          },
+        } : {}),
         elevation: true,
         instructions: false,
         units: 'km',
-        extra_info: ['surface'],
+        extra_info: ['surface', 'waytype', 'waycategory'],
       }
 
       const response = await fetch(
@@ -125,7 +148,53 @@ export const useORS = () => {
         throw new Error(errData.error?.message || `ORS error ${response.status}`)
       }
 
-      return await response.json() as ORSRouteResponse
+      const data = await response.json() as ORSRouteResponse
+
+      if (needsAlternatives && data.features && data.features.length > 1) {
+        if (wantsCycleway) {
+          // Scoring: massimizza km su infrastruttura ciclistica
+          // waytype 6=cycleway (designata), 5=track, 4=path — tutti migliori delle strade
+          // waycategory 64=tracks, 128=paths — ulteriore conferma
+          // Le strade segnalate da ORS (waytype 1-3) ottengono punteggio 0
+          const ranked = data.features.map(f => {
+            const extras = (f.properties as any).extras
+            const totalDist = f.properties.summary.distance || 1
+            let cyclingDist = 0
+
+            // Waytype: 4=path, 5=track, 6=cycleway — pesiamo di più le ciclabili dedicate
+            const waytypeExtra = extras?.waytype
+            if (waytypeExtra?.summary) {
+              for (const item of waytypeExtra.summary) {
+                if (item.value === 6) cyclingDist += item.distance * 3      // ciclabile designata — peso massimo
+                else if (item.value === 5) cyclingDist += item.distance * 2 // track
+                else if (item.value === 4) cyclingDist += item.distance * 2 // path
+              }
+            }
+
+            const score = Math.round((cyclingDist / totalDist) * 100)
+            return { feature: f, score }
+          })
+          ranked.sort((a, b) => b.score - a.score)
+          data.features = ranked.map(r => r.feature)
+          console.debug(`[ORS cycleway] scelta con score ${ranked[0].score} (alternative: ${ranked.map(r => r.score).join(', ')})`)
+        } else if (wantsFlat) {
+          // Scegli l'alternativa con meno dislivello positivo
+          const ranked = data.features.map(f => {
+            const coords = f.geometry.coordinates
+            let gain = 0
+            for (let i = 1; i < coords.length; i++) {
+              const diff = (coords[i][2] ?? 0) - (coords[i - 1][2] ?? 0)
+              if (diff > 0) gain += diff
+            }
+            return { feature: f, gain }
+          })
+          ranked.sort((a, b) => a.gain - b.gain)
+          data.features = ranked.map(r => r.feature)
+          console.debug(`[ORS flat] scelta con gain ${Math.round(ranked[0].gain)}m (alternative: ${ranked.map(r => Math.round(r.gain) + 'm').join(', ')})`)
+        }
+      }
+
+      return data
     } catch (e: any) {
       error.value = e.message || 'Errore nel calcolo del percorso'
       console.error('[ORS]', e)

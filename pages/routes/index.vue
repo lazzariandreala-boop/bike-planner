@@ -111,8 +111,10 @@ onMounted(() => {
 })
 
 const openRoute = (route: SavedRoute) => {
-  // Apri mappa con il percorso caricato
   routesStore.setCurrentRoute(route)
+  // Imposta partenza e arrivo così i campi in mappa risultano compilati
+  if (route.start) routesStore.setStartPoint(route.start)
+  if (route.end) routesStore.setEndPoint(route.end)
   router.push('/map')
 }
 

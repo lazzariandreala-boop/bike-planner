@@ -118,6 +118,7 @@ let leafletMap: LeafletMap | null = null
 let startMarker: Marker | null = null
 let endMarker: Marker | null = null
 let routeLayer: Polyline | null = null
+let routeLayerShadow: Polyline | null = null
 let L: any = null
 
 const showCycleMap = ref(false)
@@ -165,8 +166,21 @@ onMounted(async () => {
   // Click handler per impostare punti
   leafletMap.on('click', onMapClick)
 
-  // Vai alla posizione utente all'avvio
-  await goToMyLocation(true)
+  // Se c'è già un percorso corrente (es. aperto dalla lista), disegnalo
+  if (routesStore.currentRoute?.geometry?.coordinates) {
+    drawRoute(routesStore.currentRoute.geometry.coordinates)
+    if (routesStore.currentRoute.start) {
+      const { lat, lng, address } = routesStore.currentRoute.start
+      placeMarker('start', lat, lng, address || '')
+    }
+    if (routesStore.currentRoute.end) {
+      const { lat, lng, address } = routesStore.currentRoute.end
+      placeMarker('end', lat, lng, address || '')
+    }
+  } else {
+    // Vai alla posizione utente all'avvio
+    await goToMyLocation(true)
+  }
 })
 
 onUnmounted(() => {
@@ -313,6 +327,7 @@ const onCalculate = async (prefs: RoutePreferences) => {
 const drawRoute = (coordinates: number[][]) => {
   if (!L || !leafletMap) return
   routeLayer?.remove()
+  routeLayerShadow?.remove()
 
   // ORS torna [lng, lat] → invertiamo per Leaflet
   const latLngs = coordinates.map(([lng, lat]) => [lat, lng] as [number, number])
@@ -325,14 +340,19 @@ const drawRoute = (coordinates: number[][]) => {
     lineJoin: 'round',
   }).addTo(leafletMap)
 
-  // Shadow sotto la polyline (effetto profondità)
-  L.polyline(latLngs, {
+  // Shadow sotto la polyline (effetto profondità) — salvata per poterla rimuovere
+  routeLayerShadow = L.polyline(latLngs, {
     color: '#000',
     weight: 8,
     opacity: 0.2,
-  }).addTo(leafletMap).bringToBack()
+  }).addTo(leafletMap)
+  routeLayerShadow?.bringToBack()
 
-  leafletMap.fitBounds(routeLayer.getBounds(), { padding: [60, 400] })
+  // paddingTopLeft: [sidebar width + margin, top] — sidebar può arrivare a 720px con doppio pannello
+  leafletMap.fitBounds(routeLayer.getBounds(), {
+    paddingTopLeft: [740, 60],
+    paddingBottomRight: [60, 60],
+  })
 }
 
 // =============================================
@@ -386,6 +406,7 @@ const onClear = () => {
   startMarker?.remove(); startMarker = null
   endMarker?.remove(); endMarker = null
   routeLayer?.remove(); routeLayer = null
+  routeLayerShadow?.remove(); routeLayerShadow = null
 }
 
 const onClearStart = () => {
@@ -452,7 +473,7 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
   white-space: nowrap;
 }
 .map-btn:hover { border-color: #a3e635; color: #a3e635; }
-.map-btn.active { border-color: #a3e635; color: #a3e635; background: rgba(163,230,53,0.12); }
+.map-btn.active { border-color: rgb(80, 80, 80); color: rgb(80, 80, 80); background: rgba(163,230,53,0.12); }
 
 .click-mode-badge {
   position: absolute;

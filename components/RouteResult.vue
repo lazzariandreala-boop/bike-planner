@@ -24,21 +24,31 @@
         </div>
       </div>
 
-      <!-- Andatura selector -->
+      <!-- Difficoltà / Andatura — cambiare ricalcola il percorso -->
       <div class="mt-3">
-        <p class="font-mono text-xs mb-2" style="color: #404860; letter-spacing: 0.08em;">ANDATURA</p>
+        <div class="flex items-center gap-2 mb-2">
+          <p class="font-mono text-xs" style="color: #404860; letter-spacing: 0.08em;">DIFFICOLTÀ</p>
+          <div v-if="isLoading" class="spinner !w-3 !h-3"/>
+        </div>
         <div class="grid grid-cols-4 gap-1">
           <button
             v-for="p in paces" :key="p.key"
             class="pace-btn"
             :class="{ 'active': selectedPace === p.key }"
-            @click="selectedPace = p.key"
+            :disabled="isLoading"
+            @click="onDifficultyChange(p.key)"
           >
             <span class="pace-icon">{{ p.icon }}</span>
             <span>{{ p.label }}</span>
             <span class="pace-speed">{{ p.speed }}</span>
           </button>
         </div>
+        <p class="text-xs mt-1" style="color: #5a6490;">
+          <template v-if="selectedPace === 'easy'">Percorso pianeggiante, evita salite</template>
+          <template v-else-if="selectedPace === 'medium'">Leggere pendenze accettate</template>
+          <template v-else-if="selectedPace === 'hard'">Colline e salite incluse</template>
+          <template v-else>Percorso più diretto, qualsiasi dislivello</template>
+        </p>
       </div>
     </div>
 
@@ -119,13 +129,16 @@ const SURFACE_LABELS = useSurfaceLabels()
 const props = defineProps<{
   route: Partial<SavedRoute>
   isGeneratingAI: boolean
+  isLoading?: boolean
 }>()
-defineEmits<{ save: []; reset: [] }>()
+
+const emit = defineEmits<{
+  save: []
+  reset: []
+  recalculate: [difficulty: 'easy' | 'moderate' | 'hard' | 'expert']
+}>()
 
 // ── Andature ─────────────────────────────────────────────────
-// Velocità su piano + penalità salita (min per 100m D+)
-// Calibrate su Google Maps "ciclismo veloce" ≈ Hard
-// Calibrazione su Google Maps "ciclismo veloce" = Med (~18 min su 4.6km +117m)
 const paces = [
   { key: 'easy',   label: 'Easy', icon: '🚶', speed: '~10 km/h', kmh: 10, elevPenalty: 7 },
   { key: 'medium', label: 'Med',  icon: '🚴', speed: '~18 km/h', kmh: 18, elevPenalty: 3 },
@@ -135,7 +148,29 @@ const paces = [
 
 type PaceKey = typeof paces[number]['key']
 
-const selectedPace = ref<PaceKey>('medium')
+// Mappa la difficoltà del percorso → passo iniziale nel pannello risultato
+const difficultyToPace: Record<string, PaceKey> = {
+  easy:     'easy',
+  moderate: 'medium',
+  hard:     'hard',
+  expert:   'pro',
+}
+const paceToDifficulty: Record<PaceKey, 'easy' | 'moderate' | 'hard' | 'expert'> = {
+  easy:   'easy',
+  medium: 'moderate',
+  hard:   'hard',
+  pro:    'expert',
+}
+
+const selectedPace = ref<PaceKey>(
+  difficultyToPace[props.route.preferences?.difficulty ?? 'moderate'] ?? 'medium'
+)
+
+// Cambiare difficoltà aggiorna la stima E ricalcola il percorso
+const onDifficultyChange = (pace: PaceKey) => {
+  selectedPace.value = pace
+  emit('recalculate', paceToDifficulty[pace])
+}
 
 const paceName = computed(() => paces.find(p => p.key === selectedPace.value)?.label ?? '')
 
