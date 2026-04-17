@@ -285,6 +285,7 @@ const elevationPath = computed(() => {
   border-color: #a3e635;
   background: rgba(163,230,53,0.1);
 }
+.pace-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .pace-icon { font-size: 14px; line-height: 1; }
 .pace-btn span:nth-child(2) {
   font-size: 11px;
@@ -297,5 +298,19 @@ const elevationPath = computed(() => {
   font-size: 9px;
   color: #404860;
   font-family: 'IBM Plex Mono', monospace;
+}
+
+@media (max-width: 768px) {
+  .pace-btn {
+    padding: 10px 6px;
+    min-height: 60px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+  .pace-icon { font-size: 18px; }
+  .pace-btn span:nth-child(2) { font-size: 12px; }
+  .pace-speed { font-size: 10px; }
+  .stat-value { font-size: 16px; }
+  .stat-box { padding: 10px 6px; }
 }
 </style>

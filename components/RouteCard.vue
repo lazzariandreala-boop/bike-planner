@@ -21,11 +21,11 @@
         </div>
 
         <!-- Favorite -->
-        <button class="flex-shrink-0 p-1 rounded transition-all opacity-60 hover:opacity-100"
+        <button class="flex-shrink-0 p-2 rounded transition-all opacity-60 hover:opacity-100 touch-target"
           :class="{ '!opacity-100': route.isFavorite }"
           @click.stop="$emit('toggleFavorite')"
           :title="route.isFavorite ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'">
-          <svg width="16" height="16" viewBox="0 0 16 16"
+          <svg width="18" height="18" viewBox="0 0 16 16"
             :fill="route.isFavorite ? '#e8aa3a' : 'none'"
             :stroke="route.isFavorite ? '#e8aa3a' : '#5a9b5a'" stroke-width="1.3">
             <path d="M8 1.5l1.9 3.8 4.2.6-3 2.9.7 4.2L8 11l-3.8 2 .7-4.2-3-2.9 4.2-.6L8 1.5z"/>
@@ -68,11 +68,11 @@
           <span class="font-mono text-xs" style="color: #2a4a2a;">
             {{ formatDate(route.createdAt) }}
           </span>
-          <button class="p-1 opacity-30 hover:opacity-80 transition-opacity"
+          <button class="p-2 md:p-1 opacity-30 hover:opacity-80 transition-opacity touch-target"
             style="color: #ef4444;"
             @click.stop="$emit('delete')"
             title="Elimina">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
               <path d="M2 3.5h10M5.5 3.5V2.5h3v1M6 6v4M8 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
               <rect x="3" y="3.5" width="8" height="9" rx="1" stroke="currentColor" stroke-width="1.2"/>
             </svg>

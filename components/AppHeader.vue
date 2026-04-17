@@ -83,16 +83,20 @@ const navItems = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 6px 24px;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 20px;
+  min-height: 44px;
+  flex: 1;
   border-radius: 12px;
   text-decoration: none;
   color: #404860;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   font-family: 'DM Sans', sans-serif;
   letter-spacing: 0.02em;
   transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .mobile-nav-item.active {
   color: #a3e635;

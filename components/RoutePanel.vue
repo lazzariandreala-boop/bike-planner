@@ -55,8 +55,8 @@
           </div>
         </div>
 
-        <!-- Scrollable content -->
-        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+        <!-- Scrollable content — pb-safe aggiunge spazio sotto su mobile -->
+        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4 panel-scroll-content">
 
           <!-- Partenza -->
           <div>
@@ -344,9 +344,22 @@ const isMobile = ref(false)
 const sheetHeight = ref(180)
 const isDragging = ref(false)
 
-const PEEK = 180
-const half = () => Math.round(window.innerHeight * 0.52) - 58
-const full = () => Math.round(window.innerHeight * 0.88) - 58
+const PEEK = 200
+// Considera la safe area del dispositivo (notch, home indicator)
+const safeAreaBottom = () => {
+  if (typeof window === 'undefined') return 0
+  const val = getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0'
+  return parseInt(val) || 0
+}
+const half = () => Math.round(window.innerHeight * 0.55) - 58 - safeAreaBottom()
+const full = () => Math.round(window.innerHeight * 0.92) - 58 - safeAreaBottom()
+
+// Quando si apre il geocode dropdown su mobile, espandi lo sheet per mostrare i risultati
+watch([() => geocodeResults.start.length, () => geocodeResults.end.length], ([sl, el]) => {
+  if (isMobile.value && (sl > 0 || el > 0) && sheetHeight.value < half()) {
+    sheetHeight.value = half()
+  }
+})
 
 let touchStartY = 0
 let touchStartH = 0
@@ -535,5 +548,31 @@ onMounted(() => {
   cursor: pointer;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
+  /* Target minimo 44px per touch */
+  min-height: 44px;
+}
+
+/* ── Mobile overrides ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Padding bottom per non finire sotto il bordo dello sheet */
+  .panel-scroll-content {
+    padding-bottom: 24px;
+  }
+
+  /* Pulsante Reset nel header mobile */
+  .btn-ghost {
+    font-size: 13px;
+  }
+
+  /* Geocode dropdown sempre sopra tutto */
+  .geocode-dropdown {
+    z-index: 10000;
+  }
+
+  /* Inputs più ariosi */
+  .geocode-item {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
 }
 </style>

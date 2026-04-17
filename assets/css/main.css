@@ -235,4 +235,39 @@ body {
   .side-panel.dragging {
     transition: none;
   }
+
+  /* ── Mobile overrides globali ───────────────────────── */
+
+  /* Input: 16px previene l'auto-zoom di iOS sui campi focus */
+  .input-terrain {
+    font-size: 16px;
+    padding: 12px 14px;
+    min-height: 48px;
+  }
+
+  /* Bottoni primari: target minimo 48px */
+  .btn-primary {
+    min-height: 48px;
+    font-size: 15px;
+    padding: 12px 20px;
+  }
+
+  /* Bottoni ghost: target minimo 44px */
+  .btn-ghost {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  /* Drag handle più grande e facile da afferrare */
+  .drag-handle {
+    width: 52px;
+    height: 5px;
+    margin: 6px auto 6px;
+  }
+
+  /* Chip leggermente più grandi */
+  .chip {
+    font-size: 13px;
+    padding: 5px 12px;
+  }
 }

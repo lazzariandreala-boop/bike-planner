@@ -475,6 +475,15 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
 .map-btn:hover { border-color: #a3e635; color: #a3e635; }
 .map-btn.active { border-color: rgb(80, 80, 80); color: rgb(80, 80, 80); background: rgba(163,230,53,0.12); }
 
+@media (max-width: 768px) {
+  .map-btn {
+    height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+}
+
 .click-mode-badge {
   position: absolute;
   top: 12px;
@@ -511,7 +520,13 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
 .toast-info    { background: rgba(59,130,246,0.2);  border: 1px solid #3b82f6; color: #93c5fd; }
 
 @media (max-width: 768px) {
-  .toast { bottom: 70px; }
+  /* Toast sopra la bottom sheet in peek (180px) + navbar (58px) + safe area */
+  .toast {
+    bottom: calc(180px + 58px + env(safe-area-inset-bottom) + 12px);
+    max-width: calc(100vw - 32px);
+    text-align: center;
+    white-space: normal;
+  }
 }
 
 .modal-overlay {
@@ -530,6 +545,21 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
   width: 100%;
   max-width: 380px;
   box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  max-height: calc(100dvh - 80px);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .modal-card {
+    padding: 20px 16px;
+    border-radius: 20px;
+    max-height: calc(100dvh - 40px);
+  }
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+  }
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
