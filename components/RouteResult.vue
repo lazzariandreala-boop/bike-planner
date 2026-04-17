@@ -106,8 +106,9 @@
     </div>
 
     <!-- Azioni -->
-    <div class="px-4 py-3 flex gap-2" style="border-top: 1px solid #1e2130;">
-      <button class="btn-primary flex-1 py-2 text-sm" @click="$emit('save')">
+    <div class="px-4 py-3 flex flex-wrap gap-2" style="border-top: 1px solid #1e2130;">
+      <!-- Salva -->
+      <button class="btn-primary flex-1 py-2 text-sm" style="min-width: 80px;" @click="$emit('save')">
         <svg width="14" height="14" viewBox="0 0 14 14" class="inline mr-1">
           <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2z" stroke="currentColor" fill="none" stroke-width="1.2"/>
           <path d="M4 2v4h6V2" stroke="currentColor" fill="none" stroke-width="1.2"/>
@@ -115,7 +116,26 @@
         </svg>
         Salva
       </button>
-      <button class="btn-ghost flex-1 py-2 text-sm" @click="$emit('reset')">Reset</button>
+
+      <!-- Esporta GPX -->
+      <button class="btn-ghost py-2 px-3 text-sm" @click="$emit('exportGpx')" title="Esporta GPX per Garmin, Wahoo, Strava…">
+        <svg width="14" height="14" viewBox="0 0 14 14" class="inline mr-1" fill="none">
+          <path d="M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        GPX
+      </button>
+
+      <!-- Naviga -->
+      <button class="btn-navigate py-2 px-3 text-sm" @click="$emit('navigate')" title="Avvia navigazione in-app">
+        <svg width="14" height="14" viewBox="0 0 14 14" class="inline mr-1" fill="none">
+          <path d="M2 12L7 1l5 11-5-2.5L2 12z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        Naviga
+      </button>
+
+      <!-- Reset -->
+      <button class="btn-ghost py-2 px-3 text-sm" @click="$emit('reset')">Reset</button>
     </div>
   </div>
 </template>
@@ -136,6 +156,8 @@ const emit = defineEmits<{
   save: []
   reset: []
   recalculate: [difficulty: 'easy' | 'moderate' | 'hard' | 'expert']
+  exportGpx: []
+  navigate: []
 }>()
 
 // ── Andature ─────────────────────────────────────────────────
@@ -298,6 +320,24 @@ const elevationPath = computed(() => {
   font-size: 9px;
   color: #404860;
   font-family: 'IBM Plex Mono', monospace;
+}
+
+.btn-navigate {
+  background: rgba(163,230,53,0.12);
+  color: #a3e635;
+  border: 1px solid rgba(163,230,53,0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-navigate:hover {
+  background: rgba(163,230,53,0.2);
+  border-color: rgba(163,230,53,0.5);
 }
 
 @media (max-width: 768px) {

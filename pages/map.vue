@@ -24,6 +24,16 @@
         @select-start="onSelectStart"
         @select-end="onSelectEnd"
         @close-mobile="showMobilePanel = false"
+        @export-gpx="onExportGpx"
+        @navigate="onStartNavigation"
+      />
+
+      <!-- Navigazione in-app -->
+      <NavigationOverlay
+        v-if="isNavigating && routesStore.currentRoute"
+        :route="routesStore.currentRoute"
+        @stop="onStopNavigation"
+        @position-update="onNavPosition"
       />
 
       <!-- FAB mobile: apre il pannello pianificazione -->
@@ -121,6 +131,7 @@ import { useAI } from '~/composables/useAI'
 import { useGeolocation } from '~/composables/useGeolocation'
 import { useAuthStore } from '~/stores/auth'
 import { useRoutesStore } from '~/stores/routes'
+import { exportGPX } from '~/composables/useGPX'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -146,6 +157,10 @@ let cycleLayer: any = null
 // Mobile panel toggle
 const isMobileView = ref(false)
 const showMobilePanel = ref(false)
+
+// Navigazione
+const isNavigating = ref(false)
+let navPositionMarker: Marker | null = null
 
 const showSaveDialog = ref(false)
 const saveForm = reactive({ name: '', notes: '', tagsInput: '' })
@@ -337,10 +352,11 @@ const onCalculate = async (prefs: RoutePreferences) => {
     end,
     preferences: prefs,
     geometry: feature.geometry,
-    distance: Math.round(summary.distance * 10) / 10, // già in km (units: 'km')
-    duration: Math.round(summary.duration / 60),       // durata sempre in secondi
+    distance: Math.round(summary.distance * 10) / 10,
+    duration: Math.round(summary.duration / 60),
     elevation,
     surfaceBreakdown: surfaceBreakdown as any,
+    segments: feature.properties.segments,
   }
   routesStore.setCurrentRoute(route)
 
@@ -461,6 +477,55 @@ const onSelectEnd = (point: RoutePoint) => {
   routesStore.setEndPoint(point)
   placeMarker('end', point.lat, point.lng, point.address || '')
   if (leafletMap) leafletMap.panTo([point.lat, point.lng])
+}
+
+// =============================================
+// GPX EXPORT + NAVIGATION
+// =============================================
+const onExportGpx = () => {
+  if (!routesStore.currentRoute) return
+  exportGPX(routesStore.currentRoute)
+  showToast('GPX scaricato', 'success')
+}
+
+const onStartNavigation = () => {
+  if (!routesStore.currentRoute) return
+  isNavigating.value = true
+  // Su mobile chiudi il pannello per mostrare la mappa
+  if (isMobileView.value) showMobilePanel.value = false
+  showToast('Navigazione avviata', 'info')
+}
+
+const onStopNavigation = () => {
+  isNavigating.value = false
+  navPositionMarker?.remove()
+  navPositionMarker = null
+}
+
+const onNavPosition = (pos: { lat: number; lng: number; accuracy: number }) => {
+  if (!L || !leafletMap) return
+
+  // Crea o aggiorna il marcatore posizione utente
+  if (!navPositionMarker) {
+    const icon = L.divIcon({
+      html: `<div style="
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: #3b82f6;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 4px rgba(59,130,246,0.3), 0 2px 8px rgba(0,0,0,0.4);
+      "></div>`,
+      className: '',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    })
+    navPositionMarker = L.marker([pos.lat, pos.lng], { icon, zIndexOffset: 500 }).addTo(leafletMap)
+  } else {
+    navPositionMarker.setLatLng([pos.lat, pos.lng])
+  }
+
+  // Centra la mappa sulla posizione (con padding per il pannello navigazione)
+  leafletMap.panTo([pos.lat, pos.lng], { animate: true, duration: 0.5 })
 }
 
 // =============================================

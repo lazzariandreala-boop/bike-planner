@@ -162,6 +162,8 @@
               @save="$emit('save')"
               @reset="$emit('clear')"
               @recalculate="onRecalculate"
+              @export-gpx="$emit('exportGpx')"
+              @navigate="$emit('navigate')"
             />
           </div>
 
@@ -206,6 +208,8 @@
             @save="$emit('save')"
             @reset="$emit('clear')"
             @recalculate="onRecalculate"
+            @export-gpx="$emit('exportGpx')"
+            @navigate="$emit('navigate')"
           />
         </div>
       </template>
@@ -235,6 +239,8 @@ const emit = defineEmits<{
   selectStart: [RoutePoint]
   selectEnd: [RoutePoint]
   closeMobile: []
+  exportGpx: []
+  navigate: []
 }>()
 
 const { geocode } = useORS()

@@ -126,7 +126,9 @@ export const useORS = () => {
           },
         } : {}),
         elevation: true,
-        instructions: false,
+        instructions: true,
+        instructions_format: 'text',
+        language: 'it',
         units: 'km',
         extra_info: ['surface', 'waytype', 'waycategory'],
       }

@@ -69,6 +69,7 @@ export interface SavedRoute {
     profile: RouteElevationPoint[]
   }
   surfaceBreakdown: Record<SurfaceType, number> // percentuale per tipo
+  segments?: ORSSegment[]                        // istruzioni turn-by-turn (navigazione)
   createdAt: Date
   updatedAt: Date
   isFavorite: boolean
