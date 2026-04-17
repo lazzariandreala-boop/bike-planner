@@ -184,8 +184,10 @@ onMounted(async () => {
     opacity: 0.6,
   })
 
-  // Zoom controls personalizzati
-  L.control.zoom({ position: 'bottomright' }).addTo(leafletMap)
+  // Zoom controls — solo desktop (su mobile si usa il pinch)
+  if (!isMobileView.value) {
+    L.control.zoom({ position: 'bottomright' }).addTo(leafletMap)
+  }
 
   // Click handler per impostare punti
   leafletMap.on('click', onMapClick)
