@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "98761873084-tlmu9etk5vcshjnbjk4c5t1je55pjsfv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gravelai.app",
+            "certificate_hash": "500845d5c806f843c1cb42c220723bf0a478d8fb"
+          }
+        },
+        {
           "client_id": "98761873084-k38c50d0fp9qkbotaib8b3tv33tdnngc.apps.googleusercontent.com",
           "client_type": 3
         }
