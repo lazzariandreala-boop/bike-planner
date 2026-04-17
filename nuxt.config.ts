@@ -11,7 +11,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'GravelAI',
+      title: 'Gravel Planner',
       meta: [
         { charset: 'utf-8' },
         {

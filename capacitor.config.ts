@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.gravelai.app',
-  appName: 'GravelAI',
+  appName: 'Gravel Planner',
   webDir: '.output/public', // nuxt generate output
   server: {
     androidScheme: 'https',
@@ -22,6 +22,13 @@ const config: CapacitorConfig = {
     },
     Geolocation: {
       // Android permissions gestite in AndroidManifest.xml (auto-aggiunte da Capacitor)
+    },
+    GoogleAuth: {
+      // Web Client ID (OAuth 2.0) dal progetto Firebase Console
+      // Necessario per autenticazione nativa su Android via @codetrix-studio/capacitor-google-auth
+      serverClientId: '98761873084-k38c50d0fp9qkbotaib8b3tv33tdnngc.apps.googleusercontent.com',
+      scopes: ['profile', 'email'],
+      forceCodeForRefreshToken: true,
     },
   },
   android: {

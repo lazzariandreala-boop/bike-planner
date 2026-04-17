@@ -4,7 +4,7 @@ import type { SavedRoute } from '~/types'
  * Genera e scarica un file .gpx dal percorso
  */
 export function exportGPX(route: Partial<SavedRoute>) {
-  const name = route.name || 'Percorso GravelAI'
+  const name = route.name || 'Percorso Gravel Planner'
   const coords = route.geometry?.coordinates ?? []
 
   const trkpts = coords.map(([lng, lat, ele]) => {
@@ -14,7 +14,7 @@ export function exportGPX(route: Partial<SavedRoute>) {
 
   const gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1"
-  creator="GravelAI Planner"
+  creator="Gravel Planner Planner"
   xmlns="http://www.topografix.com/GPX/1/1"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">

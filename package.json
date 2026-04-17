@@ -22,6 +22,7 @@
     "@capacitor/geolocation": "^6.0.1",
     "@capacitor/haptics": "^6.0.1",
     "@capacitor/status-bar": "^6.0.2",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
     "@pinia/nuxt": "^0.5.4",
     "firebase": "^10.14.1",
     "leaflet": "^1.9.4",

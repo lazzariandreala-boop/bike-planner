@@ -3,11 +3,9 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithCredential,
   signOut,
   onAuthStateChanged,
-  type User,
 } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { Capacitor } from '@capacitor/core'
@@ -24,40 +22,45 @@ export default defineNuxtPlugin(() => {
     appId: config.public.firebaseAppId,
   }
 
-  // Evita re-inizializzazioni in HMR
   const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
-
   const auth = getAuth(app)
   const db = getFirestore(app)
-  const googleProvider = new GoogleAuthProvider()
-
-  googleProvider.addScope('profile')
-  googleProvider.addScope('email')
-
-  // Su mobile Capacitor usa redirect, su web usa popup
   const isNative = Capacitor.isNativePlatform()
 
+  /**
+   * Sign-in con Google.
+   * - Web: signInWithPopup (Firebase JS SDK)
+   * - Android/iOS: @codetrix-studio/capacitor-google-auth → nativo, nessun browser esterno
+   */
   const signInWithGoogle = async () => {
     if (isNative) {
-      await signInWithRedirect(auth, googleProvider)
+      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+      const googleUser = await GoogleAuth.signIn()
+      const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken)
+      return signInWithCredential(auth, credential)
     } else {
-      return signInWithPopup(auth, googleProvider)
+      const provider = new GoogleAuthProvider()
+      provider.addScope('profile')
+      provider.addScope('email')
+      return signInWithPopup(auth, provider)
     }
   }
 
-  const handleRedirectResult = async () => {
+  /** Non necessario con il native plugin — mantenuto per compatibilità con auth store */
+  const handleRedirectResult = async () => null
+
+  const logout = async () => {
     if (isNative) {
-      return getRedirectResult(auth)
+      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+      await GoogleAuth.signOut()
     }
-    return null
+    return signOut(auth)
   }
-
-  const logout = () => signOut(auth)
 
   return {
     provide: {
       firebase: { app, auth, db },
-      auth: { signInWithGoogle, handleRedirectResult, logout, onAuthStateChanged, googleProvider },
+      auth: { signInWithGoogle, handleRedirectResult, logout, onAuthStateChanged },
     },
   }
 })
