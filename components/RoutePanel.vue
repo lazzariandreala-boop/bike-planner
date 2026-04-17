@@ -4,16 +4,41 @@
     :class="{ dragging: isDragging }"
     :style="panelStyle"
   >
-    <!-- Drag handle (mobile only) -->
+    <!-- ═══════════════════════════════════════════
+         MOBILE: header unificato (drag + stats/titolo)
+    ═══════════════════════════════════════════ -->
     <div
       v-if="isMobile"
-      class="drag-handle-area"
+      class="mobile-sheet-header"
       @touchstart.passive="onTouchStart"
       @touchmove.prevent="onTouchMove"
       @touchend="onTouchEnd"
-      @click="onHandleTap"
     >
-      <div class="drag-handle" />
+      <!-- Drag pill — click cicla gli snap -->
+      <div class="drag-handle" @click="onHandleTap" />
+
+      <!-- Header row -->
+      <div class="mobile-header-body" @click="onHandleTap">
+        <!-- No route: titolo piano -->
+        <template v-if="!hasRoute">
+          <div class="flex-1">
+            <h2 class="font-display text-xl leading-none" style="color: #a3e635; letter-spacing: 0.06em;">PIANO ROUTE</h2>
+            <p class="font-mono text-xs mt-0.5" style="color: #404860;">GRAVEL AI PLANNER</p>
+          </div>
+        </template>
+        <!-- Route disponibile: stats rapide -->
+        <template v-else>
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <span class="font-mono text-sm font-medium" style="color: #e2eaf5;">{{ currentRoute?.distance?.toFixed(1) }} km</span>
+            <span class="text-xs" style="color: #2a4060;">·</span>
+            <span class="font-mono text-sm" style="color: #8b95a8;">{{ mobileDuration }}</span>
+            <span class="text-xs" style="color: #2a4060;">·</span>
+            <span class="font-mono text-sm" style="color: #8bb940;">+{{ currentRoute?.elevation?.gain || 0 }}m</span>
+          </div>
+        </template>
+        <!-- Reset pill -->
+        <button v-if="hasRoute" class="mobile-reset-pill" @click.stop="$emit('clear')">Reset</button>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════
@@ -33,46 +58,35 @@
 
       <!-- Contenuto espanso -->
       <template v-else>
-        <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b"
+        <!-- Header desktop only -->
+        <div v-if="!isMobile" class="flex items-center justify-between px-4 pt-3 pb-2 border-b"
           style="border-color: #1e321e; flex-shrink: 0;">
           <div>
             <h2 class="font-display text-2xl" style="color: #a3e635;">PIANO ROUTE</h2>
             <p class="font-mono text-xs" style="color: #404860;">GRAVEL AI PLANNER</p>
           </div>
-          <div class="flex items-center gap-2">
-            <button v-if="hasRoute && isMobile" class="btn-ghost text-xs py-1 px-2" @click="$emit('clear')">
-              <svg width="14" height="14" viewBox="0 0 14 14" class="inline mr-1">
-                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              Reset
-            </button>
-            <!-- Collapse button desktop -->
-            <button v-if="!isMobile" class="collapse-btn" @click="leftCollapsed = true" title="Comprimi">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M9 3l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
+          <button class="collapse-btn" @click="leftCollapsed = true" title="Comprimi">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 3l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
 
-        <!-- Scrollable content — pb-safe aggiunge spazio sotto su mobile -->
-        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4 panel-scroll-content">
+        <!-- Scrollable content -->
+        <div class="flex-1 overflow-y-auto panel-scroll-content" style="padding: 12px 16px;">
 
           <!-- Partenza -->
-          <div>
-            <label class="text-xs font-mono block mb-1" style="color: #a3e635; letter-spacing: 0.08em;">
-              PARTENZA
-            </label>
+          <div class="form-group">
+            <label class="field-label" style="color: #a3e635;">PARTENZA</label>
             <div class="relative">
               <input
-                class="input-terrain pr-8"
+                class="input-terrain pr-10"
                 :value="startLabel"
-                placeholder="Indirizzo o clicca mappa…"
+                placeholder="Indirizzo o clicca sulla mappa…"
                 @input="onSearchInput($event, 'start')"
                 @blur="closeDropdown"
               />
-              <button v-if="startPoint" class="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
-                @click="$emit('clearStart')" style="color: #8bb940;">
+              <button v-if="startPoint" class="input-clear-btn" @click="$emit('clearStart')">
                 <svg width="14" height="14" viewBox="0 0 14 14">
                   <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
@@ -92,20 +106,17 @@
           </div>
 
           <!-- Destinazione -->
-          <div>
-            <label class="text-xs font-mono block mb-1" style="color: #f59e0b; letter-spacing: 0.08em;">
-              DESTINAZIONE
-            </label>
+          <div class="form-group">
+            <label class="field-label" style="color: #f59e0b;">DESTINAZIONE</label>
             <div class="relative">
               <input
-                class="input-terrain pr-8"
+                class="input-terrain pr-10"
                 :value="endLabel"
-                placeholder="Indirizzo o clicca mappa…"
+                placeholder="Indirizzo o clicca sulla mappa…"
                 @input="onSearchInput($event, 'end')"
                 @blur="closeDropdown"
               />
-              <button v-if="endPoint" class="absolute right-2 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
-                @click="$emit('clearEnd')" style="color: #e8aa3a;">
+              <button v-if="endPoint" class="input-clear-btn" @click="$emit('clearEnd')">
                 <svg width="14" height="14" viewBox="0 0 14 14">
                   <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
@@ -125,15 +136,14 @@
           </div>
 
           <!-- Superficie -->
-          <div>
+          <div class="form-group">
             <SurfaceSelector v-model="localPreferences.surfaces" />
           </div>
 
           <!-- Opzioni extra -->
-          <div class="space-y-2">
-            <p class="text-xs font-mono" style="color: #8b95a8; letter-spacing: 0.08em;">OPZIONI</p>
-
-            <label class="flex items-center gap-2 cursor-pointer">
+          <div class="form-group">
+            <p class="field-label" style="color: #8b95a8;">OPZIONI</p>
+            <label class="option-row">
               <div class="toggle-switch" :class="{ 'on': localPreferences.avoidFerries }"
                 @click="localPreferences.avoidFerries = !localPreferences.avoidFerries">
                 <div class="toggle-thumb"/>
@@ -144,7 +154,7 @@
 
           <!-- CALCOLA -->
           <button
-            class="btn-primary w-full py-3 text-base mt-2"
+            class="btn-primary w-full calculate-btn"
             :disabled="!canCalculate || isLoading"
             @click="$emit('calculate', localPreferences)"
           >
@@ -162,15 +172,22 @@
           </button>
 
           <!-- Risultato percorso (solo mobile) -->
-          <RouteResult
-            v-if="currentRoute && isMobile"
-            :route="currentRoute"
-            :is-generating-ai="isGeneratingAI"
-            :is-loading="isLoading"
-            @save="$emit('save')"
-            @reset="$emit('clear')"
-            @recalculate="onRecalculate"
-          />
+          <div v-if="currentRoute && isMobile" class="mobile-result-section">
+            <div class="mobile-result-divider">
+              <span>PERCORSO CALCOLATO</span>
+            </div>
+            <RouteResult
+              :route="currentRoute"
+              :is-generating-ai="isGeneratingAI"
+              :is-loading="isLoading"
+              @save="$emit('save')"
+              @reset="$emit('clear')"
+              @recalculate="onRecalculate"
+            />
+          </div>
+
+          <!-- Spazio in fondo per non finire sotto il bordo -->
+          <div style="height: 20px;"/>
 
         </div>
       </template>
@@ -268,6 +285,15 @@ const canCalculate = computed(() =>
   !!props.startPoint && !!props.endPoint && localPreferences.surfaces.length > 0
 )
 
+// Durata compatta per l'header mobile
+const mobileDuration = computed(() => {
+  const m = props.currentRoute?.duration
+  if (!m) return '—'
+  const h = Math.floor(m / 60)
+  const min = m % 60
+  return h > 0 ? `${h}h${min > 0 ? min : ''}` : `${min}m`
+})
+
 watch(() => props.startPoint, (p) => {
   startLabel.value = p?.address ?? ''
 }, { immediate: true })
@@ -281,10 +307,11 @@ const onRecalculate = (difficulty: 'easy' | 'moderate' | 'hard' | 'expert') => {
   emit('calculate', { ...localPreferences })
 }
 
-// Quando arriva un nuovo percorso, espandi automaticamente la sezione destra
+// Quando arriva un nuovo percorso: desktop → espandi destra; mobile → full sheet
 watch(() => props.currentRoute, (newVal, oldVal) => {
   if (newVal && !oldVal) {
     rightCollapsed.value = false
+    if (isMobile.value) sheetHeight.value = full()
   }
 })
 
@@ -539,29 +566,110 @@ onMounted(() => {
   background: #a3e635;
 }
 
-/* ── Drag handle mobile ───────────────────────────────────── */
-.drag-handle-area {
+/* ── Form groups ──────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 16px;
+}
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.calculate-btn {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.input-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 0 6px;
+  opacity: 0.5;
+  color: #8bb940;
+  background: none;
+  border: none;
   cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+}
+.input-clear-btn:hover { opacity: 1; }
+
+/* ── Mobile sheet header ──────────────────────────────────── */
+.mobile-sheet-header {
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  /* Target minimo 44px per touch */
-  min-height: 44px;
+  user-select: none;
+}
+.mobile-header-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 16px 12px;
+}
+.mobile-reset-pill {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-reset-pill:active { background: rgba(239,68,68,0.2); }
+
+/* ── Mobile result section ────────────────────────────────── */
+.mobile-result-section {
+  margin-top: 8px;
+}
+.mobile-result-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mobile-result-divider::before,
+.mobile-result-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #1e321e;
+}
+.mobile-result-divider span {
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  color: #2a4a2a;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 
 /* ── Mobile overrides ──────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Padding bottom per non finire sotto il bordo dello sheet */
-  .panel-scroll-content {
-    padding-bottom: 24px;
-  }
-
-  /* Pulsante Reset nel header mobile */
-  .btn-ghost {
-    font-size: 13px;
+  /* Panel-left su mobile non ha header proprio — lo gestisce mobile-sheet-header */
+  .panel-section.panel-left {
+    flex: 1;
+    min-height: 0;
   }
 
   /* Geocode dropdown sempre sopra tutto */
@@ -569,10 +677,10 @@ onMounted(() => {
     z-index: 10000;
   }
 
-  /* Inputs più ariosi */
+  /* Geocode items più grandi su mobile */
   .geocode-item {
-    padding: 12px 14px;
-    font-size: 14px;
+    padding: 14px 14px;
+    font-size: 15px;
   }
 }
 </style>

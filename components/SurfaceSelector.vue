@@ -169,6 +169,7 @@ watch(() => props.modelValue, (val) => {
   cursor: pointer;
   transition: all 0.15s;
   transform: rotate(45deg);
+  flex-shrink: 0;
 }
 .toggle-btn--on {
   border-color: rgba(139,185,64,0.4);
@@ -179,5 +180,26 @@ watch(() => props.modelValue, (val) => {
 .toggle-btn:hover {
   border-color: #8bb940;
   color: #8bb940;
+}
+
+@media (max-width: 768px) {
+  .surface-item {
+    min-height: 52px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .toggle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+  }
+  .drag-icon {
+    min-width: 36px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+  }
 }
 </style>

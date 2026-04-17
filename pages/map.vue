@@ -348,10 +348,11 @@ const drawRoute = (coordinates: number[][]) => {
   }).addTo(leafletMap)
   routeLayerShadow?.bringToBack()
 
-  // paddingTopLeft: [sidebar width + margin, top] — sidebar può arrivare a 720px con doppio pannello
+  // Padding diverso per desktop (sidebar larga) e mobile (bottom sheet)
+  const mobile = window.innerWidth < 768
   leafletMap.fitBounds(routeLayer.getBounds(), {
-    paddingTopLeft: [740, 60],
-    paddingBottomRight: [60, 60],
+    paddingTopLeft:     mobile ? [16, 70]  : [740, 60],
+    paddingBottomRight: mobile ? [16, 300] : [60,  60],
   })
 }
 
