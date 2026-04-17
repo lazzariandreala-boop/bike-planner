@@ -23,13 +23,6 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#0f1a0f' },
       ],
       link: [
-        // Leaflet CSS (loaded from CDN to avoid SSR issues)
-        {
-          rel: 'stylesheet',
-          href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-          integrity: 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=',
-          crossorigin: '',
-        },
         // Fonts
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
@@ -41,7 +34,7 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', 'maplibre-gl/dist/maplibre-gl.css'],
 
   runtimeConfig: {
     public: {
@@ -110,10 +103,9 @@ export default defineNuxtConfig({
     },
   },
 
-  // Vite config per compatibilità Leaflet
   vite: {
     optimizeDeps: {
-      include: ['leaflet'],
+      include: ['maplibre-gl'],
     },
     define: {
       global: 'globalThis',
