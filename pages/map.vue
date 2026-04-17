@@ -26,6 +26,8 @@
         @close-mobile="showMobilePanel = false"
         @export-gpx="onExportGpx"
         @navigate="onStartNavigation"
+        @use-location-start="onUseLocationStart"
+        @use-location-end="onUseLocationEnd"
       />
 
       <!-- Navigazione in-app -->
@@ -322,7 +324,7 @@ const _createMarker = async (el: HTMLElement, lng: number, lat: number, html: st
 const goToMyLocation = async (silent = false) => {
   const pos = await getCurrentPosition()
   if (pos && map) {
-    map.flyTo({ center: [pos.lng, pos.lat], zoom: 13, duration: 1000 })
+    map.flyTo({ center: [pos.lng, pos.lat], zoom: 17, duration: 1000 })
     if (!silent) showToast('Posizione rilevata', 'success')
   } else if (!silent) {
     showToast('Impossibile rilevare la posizione', 'error')
@@ -524,6 +526,35 @@ const onSelectEnd = (point: RoutePoint) => {
   routesStore.setEndPoint(point)
   placeMarker('end', point)
   map?.easeTo({ center: [point.lng, point.lat], duration: 400 })
+}
+
+const onUseLocationStart = async () => {
+  showToast('Rilevamento posizione…', 'info')
+  const pos = await getCurrentPosition()
+  if (!pos) { showToast('Posizione non disponibile', 'error'); return }
+  const point: RoutePoint = { lat: pos.lat, lng: pos.lng, address: 'Posizione attuale' }
+  routesStore.setStartPoint(point)
+  placeMarker('start', point)
+  map?.easeTo({ center: [pos.lng, pos.lat], duration: 600 })
+  showToast('Partenza: posizione attuale', 'start')
+  reverseGeocode(pos.lat, pos.lng).then(address => {
+    routesStore.setStartPoint({ ...point, address })
+  })
+}
+
+const onUseLocationEnd = async () => {
+  showToast('Rilevamento posizione…', 'info')
+  const pos = await getCurrentPosition()
+  if (!pos) { showToast('Posizione non disponibile', 'error'); return }
+  const point: RoutePoint = { lat: pos.lat, lng: pos.lng, address: 'Posizione attuale' }
+  routesStore.setEndPoint(point)
+  placeMarker('end', point)
+  map?.easeTo({ center: [pos.lng, pos.lat], duration: 600 })
+  showToast('Destinazione: posizione attuale', 'end')
+  if (isMobileView.value) showMobilePanel.value = true
+  reverseGeocode(pos.lat, pos.lng).then(address => {
+    routesStore.setEndPoint({ ...point, address })
+  })
 }
 
 // =============================================

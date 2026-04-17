@@ -59,12 +59,18 @@
             <label class="field-label" style="color: #a3e635;">PARTENZA</label>
             <div class="relative">
               <input
-                class="input-terrain pr-10"
+                class="input-terrain" style="padding-right: 44px;"
                 :value="startLabel"
                 placeholder="Indirizzo o clicca sulla mappa…"
                 @input="onSearchInput($event, 'start')"
                 @blur="closeDropdown"
               />
+              <button v-if="!startPoint" class="input-gps-btn" @click="$emit('useLocationStart')" title="Usa posizione attuale">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M7 1v2M7 11v2M1 7h2M11 7h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </button>
               <button v-if="startPoint" class="input-clear-btn" @click="$emit('clearStart')">
                 <svg width="14" height="14" viewBox="0 0 14 14">
                   <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -89,12 +95,18 @@
             <label class="field-label" style="color: #f59e0b;">DESTINAZIONE</label>
             <div class="relative">
               <input
-                class="input-terrain pr-10"
+                class="input-terrain" style="padding-right: 44px;"
                 :value="endLabel"
                 placeholder="Indirizzo o clicca sulla mappa…"
                 @input="onSearchInput($event, 'end')"
                 @blur="closeDropdown"
               />
+              <button v-if="!endPoint" class="input-gps-btn" @click="$emit('useLocationEnd')" title="Usa posizione attuale">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M7 1v2M7 11v2M1 7h2M11 7h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </button>
               <button v-if="endPoint" class="input-clear-btn" @click="$emit('clearEnd')">
                 <svg width="14" height="14" viewBox="0 0 14 14">
                   <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -238,6 +250,8 @@ const emit = defineEmits<{
   clearEnd: []
   selectStart: [RoutePoint]
   selectEnd: [RoutePoint]
+  useLocationStart: []
+  useLocationEnd: []
   closeMobile: []
   exportGpx: []
   navigate: []
@@ -575,6 +589,21 @@ onMounted(() => {
   transition: opacity 0.15s;
 }
 .input-clear-btn:hover { opacity: 1; }
+
+.input-gps-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.45;
+  color: #8b95a8;
+  background: none; border: none;
+  cursor: pointer; border-radius: 4px;
+  transition: all 0.15s;
+}
+.input-gps-btn:hover { opacity: 1; color: #a3e635; }
 
 /* ── Mobile result section ────────────────────────────────── */
 .mobile-result-section { margin-top: 8px; }
