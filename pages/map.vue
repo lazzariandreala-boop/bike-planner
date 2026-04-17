@@ -150,7 +150,7 @@ const showMobilePanel = ref(false)
 const showSaveDialog = ref(false)
 const saveForm = reactive({ name: '', notes: '', tagsInput: '' })
 
-const toast = ref<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
+const toast = ref<{ message: string; type: 'success' | 'error' | 'info' | 'start' | 'end' } | null>(null)
 let toastTimer: any = null
 
 // =============================================
@@ -236,11 +236,13 @@ const onMapClick = (e: any) => {
   if (target === 'start') {
     routesStore.setStartPoint(point)
     placeMarker('start', lat, lng, coordLabel)
-    showToast('Partenza impostata', 'info')
+    showToast('Partenza impostata', 'start')
   } else {
     routesStore.setEndPoint(point)
     placeMarker('end', lat, lng, coordLabel)
-    showToast('Destinazione impostata', 'info')
+    showToast('Destinazione impostata', 'end')
+    // Su mobile, apri subito il pannello pianificazione
+    if (isMobileView.value) showMobilePanel.value = true
   }
 
   // Aggiorna l'indirizzo leggibile in background
@@ -464,7 +466,7 @@ const onSelectEnd = (point: RoutePoint) => {
 // =============================================
 // TOAST
 // =============================================
-const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+const showToast = (message: string, type: 'success' | 'error' | 'info' | 'start' | 'end') => {
   toast.value = { message, type }
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toast.value = null }, 3000)
@@ -594,6 +596,8 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
 .toast-success { background: rgba(139,185,64,0.2); border: 1px solid #8bb940; color: #8bb940; }
 .toast-error   { background: rgba(239,68,68,0.2);  border: 1px solid #ef4444; color: #fca5a5; }
 .toast-info    { background: rgba(59,130,246,0.2);  border: 1px solid #3b82f6; color: #93c5fd; }
+.toast-start   { background: rgba(139,185,64,0.92); border: 1px solid #2a4010; color: #1a2a08; font-weight: 600; }
+.toast-end     { background: rgba(232,170,58,0.92); border: 1px solid #5a3a08; color: #2a1800; font-weight: 600; }
 
 @media (max-width: 768px) {
   .toast {
