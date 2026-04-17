@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "98761873084",
+    "project_id": "gravel-planner",
+    "storage_bucket": "gravel-planner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:98761873084:android:83cbfd7cc9b514cd05e2b9",
+        "android_client_info": {
+          "package_name": "com.gravelai.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "98761873084-k38c50d0fp9qkbotaib8b3tv33tdnngc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmr8aEugNdkpCIY1fKyWUTWKRQsrI9b1k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "98761873084-k38c50d0fp9qkbotaib8b3tv33tdnngc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -12,9 +12,15 @@ dist/
 node_modules/
 
 # Capacitor
-android/
 ios/
 *.keystore
+
+# Android build artifacts (keep source, ignore generated/build output)
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/local.properties
 
 # Misc
 .DS_Store
