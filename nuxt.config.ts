@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   ssr: false, // REQUIRED for Capacitor
 
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
 
   modules: [
     '@pinia/nuxt',
