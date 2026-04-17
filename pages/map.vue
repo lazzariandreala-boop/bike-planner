@@ -8,8 +8,9 @@
       <!-- Mappa (occupa tutto) -->
       <div id="map" class="absolute inset-0" ref="mapContainer" />
 
-      <!-- Pannello laterale / bottom sheet -->
+      <!-- Pannello laterale (desktop) / overlay (mobile) -->
       <RoutePanel
+        v-show="!isMobileView || showMobilePanel"
         :start-point="routesStore.startPoint"
         :end-point="routesStore.endPoint"
         :current-route="routesStore.currentRoute"
@@ -22,7 +23,24 @@
         @clear-end="onClearEnd"
         @select-start="onSelectStart"
         @select-end="onSelectEnd"
+        @close-mobile="showMobilePanel = false"
       />
+
+      <!-- FAB mobile: apre il pannello pianificazione -->
+      <button
+        v-if="isMobileView && !showMobilePanel"
+        class="mobile-fab"
+        @click="showMobilePanel = true"
+      >
+        <!-- Se c'è già un percorso mostra le stats, altrimenti l'icona -->
+        <template v-if="routesStore.currentRoute">
+          <div class="fab-route-dot"/>
+        </template>
+        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </button>
 
       <!-- Toolbar mappa (destra) -->
       <div class="map-toolbar" @click.stop>
@@ -125,6 +143,10 @@ const showCycleMap = ref(false)
 let osmLayer: any = null
 let cycleLayer: any = null
 
+// Mobile panel toggle
+const isMobileView = ref(false)
+const showMobilePanel = ref(false)
+
 const showSaveDialog = ref(false)
 const saveForm = reactive({ name: '', notes: '', tagsInput: '' })
 
@@ -140,6 +162,8 @@ onMounted(async () => {
 
   await nextTick()
   if (!mapContainer.value) return
+
+  isMobileView.value = window.innerWidth < 768
 
   leafletMap = L.map(mapContainer.value, {
     center: [45.8, 11.5], // Veneto default (casa tua!)
@@ -320,6 +344,9 @@ const onCalculate = async (prefs: RoutePreferences) => {
   generateRouteDescription(route).then(desc => {
     routesStore.setCurrentRoute({ ...route, aiDescription: desc })
   })
+
+  // Su mobile: apri il pannello risultato automaticamente
+  if (isMobileView.value) showMobilePanel.value = true
 
   showToast(`Percorso ${summary.distance.toFixed(1)} km trovato`, 'success')
 }
@@ -504,6 +531,52 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
   .click-mode-badge { top: auto; bottom: 70px; }
 }
 
+/* ── Mobile FAB ──────────────────────────────────────────── */
+.mobile-fab {
+  display: none;
+}
+@media (max-width: 768px) {
+  .mobile-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: calc(58px + env(safe-area-inset-bottom) + 16px);
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #a3e635;
+    color: #060810;
+    border: none;
+    box-shadow: 0 4px 20px rgba(163,230,53,0.45), 0 2px 8px rgba(0,0,0,0.4);
+    cursor: pointer;
+    z-index: 950;
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-fab:active {
+    transform: scale(0.93);
+    box-shadow: 0 2px 10px rgba(163,230,53,0.3);
+  }
+  .fab-route-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #060810;
+    box-shadow: 0 0 0 3px #060810, 0 0 0 5px #060810;
+    position: relative;
+  }
+  .fab-route-dot::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 20px; height: 20px;
+    border: 2px solid #060810;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
 .toast {
   position: absolute;
   bottom: 20px;
@@ -521,9 +594,8 @@ const showToast = (message: string, type: 'success' | 'error' | 'info') => {
 .toast-info    { background: rgba(59,130,246,0.2);  border: 1px solid #3b82f6; color: #93c5fd; }
 
 @media (max-width: 768px) {
-  /* Toast sopra la bottom sheet in peek (180px) + navbar (58px) + safe area */
   .toast {
-    bottom: calc(180px + 58px + env(safe-area-inset-bottom) + 12px);
+    bottom: calc(58px + env(safe-area-inset-bottom) + 80px);
     max-width: calc(100vw - 32px);
     text-align: center;
     white-space: normal;

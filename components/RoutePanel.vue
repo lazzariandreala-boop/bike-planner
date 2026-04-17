@@ -1,44 +1,23 @@
 <template>
-  <aside
-    class="side-panel"
-    :class="{ dragging: isDragging }"
-    :style="panelStyle"
-  >
-    <!-- ═══════════════════════════════════════════
-         MOBILE: header unificato (drag + stats/titolo)
-    ═══════════════════════════════════════════ -->
-    <div
-      v-if="isMobile"
-      class="mobile-sheet-header"
-      @touchstart.passive="onTouchStart"
-      @touchmove.prevent="onTouchMove"
-      @touchend="onTouchEnd"
-    >
-      <!-- Drag pill — click cicla gli snap -->
-      <div class="drag-handle" @click="onHandleTap" />
+  <aside class="side-panel" :style="panelStyle">
 
-      <!-- Header row -->
-      <div class="mobile-header-body" @click="onHandleTap">
-        <!-- No route: titolo piano -->
-        <template v-if="!hasRoute">
-          <div class="flex-1">
-            <h2 class="font-display text-xl leading-none" style="color: #a3e635; letter-spacing: 0.06em;">PIANO ROUTE</h2>
-            <p class="font-mono text-xs mt-0.5" style="color: #404860;">GRAVEL AI PLANNER</p>
-          </div>
-        </template>
-        <!-- Route disponibile: stats rapide -->
-        <template v-else>
-          <div class="flex items-center gap-2 flex-1 min-w-0">
-            <span class="font-mono text-sm font-medium" style="color: #e2eaf5;">{{ currentRoute?.distance?.toFixed(1) }} km</span>
-            <span class="text-xs" style="color: #2a4060;">·</span>
-            <span class="font-mono text-sm" style="color: #8b95a8;">{{ mobileDuration }}</span>
-            <span class="text-xs" style="color: #2a4060;">·</span>
-            <span class="font-mono text-sm" style="color: #8bb940;">+{{ currentRoute?.elevation?.gain || 0 }}m</span>
-          </div>
-        </template>
-        <!-- Reset pill -->
-        <button v-if="hasRoute" class="mobile-reset-pill" @click.stop="$emit('clear')">Reset</button>
+    <!-- ═══════════════════════════════════════════
+         MOBILE: top nav bar con tasto "torna alla mappa"
+    ═══════════════════════════════════════════ -->
+    <div v-if="isMobile" class="mobile-topbar">
+      <div class="flex-1 min-w-0">
+        <h2 class="font-display text-2xl leading-none" style="color: #a3e635;">PIANO ROUTE</h2>
+        <p v-if="hasRoute" class="font-mono text-xs mt-0.5" style="color: #404860;">
+          {{ currentRoute?.distance?.toFixed(1) }} km · {{ mobileDuration }} · +{{ currentRoute?.elevation?.gain || 0 }}m
+        </p>
+        <p v-else class="font-mono text-xs mt-0.5" style="color: #404860;">GRAVEL AI PLANNER</p>
       </div>
+      <!-- Close FAB (same style as open FAB in mappa) -->
+      <button class="mobile-close-btn" @click="$emit('closeMobile')" title="Torna alla mappa">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
 
     <!-- ═══════════════════════════════════════════
@@ -73,7 +52,7 @@
         </div>
 
         <!-- Scrollable content -->
-        <div class="flex-1 overflow-y-auto panel-scroll-content" style="padding: 12px 16px;">
+        <div class="flex-1 overflow-y-auto panel-scroll-content" style="padding: 16px;">
 
           <!-- Partenza -->
           <div class="form-group">
@@ -186,9 +165,7 @@
             />
           </div>
 
-          <!-- Spazio in fondo per non finire sotto il bordo -->
-          <div style="height: 20px;"/>
-
+          <div style="height: 24px;"/>
         </div>
       </template>
     </div>
@@ -201,7 +178,6 @@
       class="panel-section panel-right"
       :class="{ 'panel-collapsed': rightCollapsed }"
     >
-
       <!-- Strip compressa -->
       <div v-if="rightCollapsed" class="collapsed-strip">
         <button class="expand-strip-btn" @click="rightCollapsed = false" title="Espandi">
@@ -258,6 +234,7 @@ const emit = defineEmits<{
   clearEnd: []
   selectStart: [RoutePoint]
   selectEnd: [RoutePoint]
+  closeMobile: []
 }>()
 
 const { geocode } = useORS()
@@ -268,7 +245,6 @@ const localPreferences = reactive<RoutePreferences>({
   avoidFerries: false,
   difficulty: 'moderate',
 })
-
 
 const geocodeResults = reactive<{
   start: { lat: number; lng: number; label: string }[]
@@ -285,7 +261,6 @@ const canCalculate = computed(() =>
   !!props.startPoint && !!props.endPoint && localPreferences.surfaces.length > 0
 )
 
-// Durata compatta per l'header mobile
 const mobileDuration = computed(() => {
   const m = props.currentRoute?.duration
   if (!m) return '—'
@@ -294,12 +269,8 @@ const mobileDuration = computed(() => {
   return h > 0 ? `${h}h${min > 0 ? min : ''}` : `${min}m`
 })
 
-watch(() => props.startPoint, (p) => {
-  startLabel.value = p?.address ?? ''
-}, { immediate: true })
-watch(() => props.endPoint, (p) => {
-  endLabel.value = p?.address ?? ''
-}, { immediate: true })
+watch(() => props.startPoint, (p) => { startLabel.value = p?.address ?? '' }, { immediate: true })
+watch(() => props.endPoint,   (p) => { endLabel.value   = p?.address ?? '' }, { immediate: true })
 
 // Ricalcola il percorso quando l'utente cambia difficoltà nel pannello risultato
 const onRecalculate = (difficulty: 'easy' | 'moderate' | 'hard' | 'expert') => {
@@ -307,11 +278,10 @@ const onRecalculate = (difficulty: 'easy' | 'moderate' | 'hard' | 'expert') => {
   emit('calculate', { ...localPreferences })
 }
 
-// Quando arriva un nuovo percorso: desktop → espandi destra; mobile → full sheet
+// Desktop: espandi la sezione destra quando arriva un percorso
 watch(() => props.currentRoute, (newVal, oldVal) => {
-  if (newVal && !oldVal) {
+  if (newVal && !oldVal && !isMobile.value) {
     rightCollapsed.value = false
-    if (isMobile.value) sheetHeight.value = full()
   }
 })
 
@@ -347,17 +317,32 @@ const closeDropdown = () => {
 }
 
 // ── Collapse state (desktop only) ─────────────────────────────
-const leftCollapsed = ref(false)
+const leftCollapsed  = ref(false)
 const rightCollapsed = ref(false)
 
-const SECTION_W = 360
+const SECTION_W  = 360
 const COLLAPSED_W = 40
 
+const isMobile = ref(false)
+
 const panelStyle = computed(() => {
-  if (isMobile.value) return { height: sheetHeight.value + 'px' }
+  if (isMobile.value) {
+    // Full-screen overlay above bottom navbar
+    return {
+      position: 'fixed' as const,
+      top: '0',
+      left: '0',
+      right: '0',
+      bottom: 'calc(58px + env(safe-area-inset-bottom))',
+      width: '100%',
+      height: 'auto',
+      zIndex: '2000',
+      flexDirection: 'column' as const,
+    }
+  }
 
   const hasRight = !!props.currentRoute
-  const leftW = leftCollapsed.value ? COLLAPSED_W : SECTION_W
+  const leftW  = leftCollapsed.value ? COLLAPSED_W : SECTION_W
   const rightW = hasRight ? (rightCollapsed.value ? COLLAPSED_W : SECTION_W) : 0
 
   return {
@@ -366,64 +351,8 @@ const panelStyle = computed(() => {
   }
 })
 
-// ── Bottom sheet drag (mobile only) ──────────────────────────
-const isMobile = ref(false)
-const sheetHeight = ref(180)
-const isDragging = ref(false)
-
-const PEEK = 200
-// Considera la safe area del dispositivo (notch, home indicator)
-const safeAreaBottom = () => {
-  if (typeof window === 'undefined') return 0
-  const val = getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0'
-  return parseInt(val) || 0
-}
-const half = () => Math.round(window.innerHeight * 0.55) - 58 - safeAreaBottom()
-const full = () => Math.round(window.innerHeight * 0.92) - 58 - safeAreaBottom()
-
-// Quando si apre il geocode dropdown su mobile, espandi lo sheet per mostrare i risultati
-watch([() => geocodeResults.start.length, () => geocodeResults.end.length], ([sl, el]) => {
-  if (isMobile.value && (sl > 0 || el > 0) && sheetHeight.value < half()) {
-    sheetHeight.value = half()
-  }
-})
-
-let touchStartY = 0
-let touchStartH = 0
-let didDrag = false
-
-const onTouchStart = (e: TouchEvent) => {
-  touchStartY = e.touches[0].clientY
-  touchStartH = sheetHeight.value
-  isDragging.value = true
-  didDrag = false
-}
-
-const onTouchMove = (e: TouchEvent) => {
-  const delta = touchStartY - e.touches[0].clientY
-  if (Math.abs(delta) > 6) didDrag = true
-  sheetHeight.value = Math.max(PEEK - 40, Math.min(full(), touchStartH + delta))
-}
-
-const onTouchEnd = () => {
-  isDragging.value = false
-  const snaps = [PEEK, half(), full()]
-  sheetHeight.value = snaps.reduce((a, b) =>
-    Math.abs(a - sheetHeight.value) <= Math.abs(b - sheetHeight.value) ? a : b
-  )
-}
-
-const onHandleTap = () => {
-  if (didDrag) return
-  const snaps = [PEEK, half(), full()]
-  const currentIdx = snaps.findIndex(s => Math.abs(s - sheetHeight.value) < 20)
-  const nextIdx = currentIdx === -1 ? 1 : (currentIdx + 1) % snaps.length
-  sheetHeight.value = snaps[nextIdx]
-}
-
 onMounted(() => {
   isMobile.value = window.innerWidth < 768
-  if (isMobile.value) sheetHeight.value = PEEK
 })
 </script>
 
@@ -447,11 +376,17 @@ onMounted(() => {
   border-right: 1px solid #1e321e;
 }
 
-.panel-right {
-  width: 360px;
-}
-.panel-right.panel-collapsed {
-  width: 40px;
+.panel-right { width: 360px; }
+.panel-right.panel-collapsed { width: 40px; }
+
+/* ── Mobile overrides ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .panel-section.panel-left {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    border-right: none;
+  }
 }
 
 /* ── Strip compressa ──────────────────────────────────────── */
@@ -462,7 +397,6 @@ onMounted(() => {
   width: 40px;
   height: 100%;
 }
-
 .expand-strip-btn {
   display: flex;
   flex-direction: column;
@@ -479,7 +413,6 @@ onMounted(() => {
   justify-content: center;
 }
 .expand-strip-btn:hover { color: #a3e635; }
-
 .collapsed-label {
   font-size: 9px;
   font-family: 'IBM Plex Mono', monospace;
@@ -489,13 +422,10 @@ onMounted(() => {
   opacity: 0.5;
 }
 
-/* ── Bottone collapse nell'header ─────────────────────────── */
+/* ── Bottone collapse desktop ─────────────────────────────── */
 .collapse-btn {
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
   border-radius: 5px;
   color: #5a6490;
   background: none;
@@ -510,6 +440,35 @@ onMounted(() => {
   color: #a3e635;
 }
 
+/* ── Mobile top bar ───────────────────────────────────────── */
+.mobile-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #1a2a1a;
+  flex-shrink: 0;
+  background: #0f1119;
+}
+.mobile-close-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #8b95a8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-close-btn:active {
+  background: rgba(255,255,255,0.12);
+}
+
 /* ── Geocode dropdown ─────────────────────────────────────── */
 .geocode-dropdown {
   position: absolute;
@@ -519,7 +478,7 @@ onMounted(() => {
   border-top: none;
   border-radius: 0 0 8px 8px;
   z-index: 9999;
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
@@ -528,7 +487,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 10px 12px;
   text-align: left;
   font-size: 13px;
   color: #8b95a8;
@@ -540,6 +499,11 @@ onMounted(() => {
 }
 .geocode-item:hover { background: #1e2130; color: #e2eaf5; }
 .geocode-item:last-child { border-bottom: none; }
+
+@media (max-width: 768px) {
+  .geocode-dropdown { z-index: 10000; }
+  .geocode-item { padding: 14px 14px; font-size: 15px; }
+}
 
 /* ── Toggle switches ──────────────────────────────────────── */
 .toggle-switch {
@@ -566,23 +530,22 @@ onMounted(() => {
   background: #a3e635;
 }
 
-/* ── Form groups ──────────────────────────────────────────── */
-.form-group {
-  margin-bottom: 16px;
-}
+/* ── Form ─────────────────────────────────────────────────── */
+.form-group { margin-bottom: 18px; }
 .field-label {
   display: block;
   font-size: 11px;
   font-family: 'IBM Plex Mono', monospace;
   letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 .option-row {
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 6px 0;
+  min-height: 44px;
 }
 .calculate-btn {
   width: 100%;
@@ -590,59 +553,25 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 700;
   margin-top: 4px;
+  min-height: 52px;
 }
 .input-clear-btn {
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
   opacity: 0.5;
   color: #8bb940;
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
+  background: none; border: none;
+  cursor: pointer; border-radius: 4px;
   transition: opacity 0.15s;
 }
 .input-clear-btn:hover { opacity: 1; }
 
-/* ── Mobile sheet header ──────────────────────────────────── */
-.mobile-sheet-header {
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-.mobile-header-body {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 2px 16px 12px;
-}
-.mobile-reset-pill {
-  flex-shrink: 0;
-  padding: 7px 16px;
-  border-radius: 20px;
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.25);
-  color: #fca5a5;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.mobile-reset-pill:active { background: rgba(239,68,68,0.2); }
-
 /* ── Mobile result section ────────────────────────────────── */
-.mobile-result-section {
-  margin-top: 8px;
-}
+.mobile-result-section { margin-top: 8px; }
 .mobile-result-divider {
   display: flex;
   align-items: center;
@@ -662,25 +591,5 @@ onMounted(() => {
   color: #2a4a2a;
   letter-spacing: 0.1em;
   white-space: nowrap;
-}
-
-/* ── Mobile overrides ──────────────────────────────────────── */
-@media (max-width: 768px) {
-  /* Panel-left su mobile non ha header proprio — lo gestisce mobile-sheet-header */
-  .panel-section.panel-left {
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Geocode dropdown sempre sopra tutto */
-  .geocode-dropdown {
-    z-index: 10000;
-  }
-
-  /* Geocode items più grandi su mobile */
-  .geocode-item {
-    padding: 14px 14px;
-    font-size: 15px;
-  }
 }
 </style>

@@ -220,22 +220,13 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Su mobile il side-panel è un overlay full-screen gestito da RoutePanel.vue */
   .side-panel {
-    width: 100%;
-    top: auto;
-    left: 0; right: 0;
-    bottom: calc(58px + env(safe-area-inset-bottom));
-    height: 180px; /* overridden by JS */
     flex-direction: column;
     border-right: none;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px 20px 0 0;
+    border-top: none;
+    border-radius: 0;
     background: #0f1119;
-    box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
-    transition: height 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  .side-panel.dragging {
-    transition: none;
   }
 
   /* ── Mobile overrides globali ───────────────────────── */
