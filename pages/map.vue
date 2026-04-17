@@ -2,8 +2,8 @@
   <div class="relative w-full h-full flex flex-col">
     <AppHeader />
 
-    <!-- Layout principale -->
-    <div class="relative flex-1 overflow-hidden">
+    <!-- Layout principale — overflow:visible durante navigazione per non tagliare la rotazione -->
+    <div class="relative flex-1" :class="isNavigating ? 'overflow-visible' : 'overflow-hidden'">
 
       <!-- Mappa (occupa tutto) -->
       <div id="map" class="absolute inset-0" ref="mapContainer" />
@@ -161,6 +161,7 @@ const showMobilePanel = ref(false)
 // Navigazione
 const isNavigating = ref(false)
 let navPositionMarker: Marker | null = null
+let lastNavBearing = 0
 
 const showSaveDialog = ref(false)
 const saveForm = reactive({ name: '', notes: '', tagsInput: '' })
@@ -491,8 +492,9 @@ const onExportGpx = () => {
 const onStartNavigation = () => {
   if (!routesStore.currentRoute) return
   isNavigating.value = true
-  // Su mobile chiudi il pannello per mostrare la mappa
   if (isMobileView.value) showMobilePanel.value = false
+  // Zoom street-level per la navigazione
+  if (leafletMap) leafletMap.setZoom(17, { animate: true })
   showToast('Navigazione avviata', 'info')
 }
 
@@ -500,32 +502,58 @@ const onStopNavigation = () => {
   isNavigating.value = false
   navPositionMarker?.remove()
   navPositionMarker = null
+  // Ripristina rotazione nord-up e zoom
+  _setMapRotation(0)
+  if (leafletMap) leafletMap.setZoom(13, { animate: true })
 }
 
-const onNavPosition = (pos: { lat: number; lng: number; accuracy: number }) => {
+const onNavPosition = (pos: { lat: number; lng: number; accuracy: number; bearing: number | null }) => {
   if (!L || !leafletMap) return
 
-  // Crea o aggiorna il marcatore posizione utente
+  // ── Marker freccia direzionale ────────────────────────────────
+  const navIcon = L.divIcon({
+    html: `<div style="
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    ">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3L20 21L12 17L4 21L12 3Z" fill="#3b82f6" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>`,
+    className: '',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  })
+
   if (!navPositionMarker) {
-    const icon = L.divIcon({
-      html: `<div style="
-        width: 16px; height: 16px;
-        border-radius: 50%;
-        background: #3b82f6;
-        border: 3px solid #fff;
-        box-shadow: 0 0 0 4px rgba(59,130,246,0.3), 0 2px 8px rgba(0,0,0,0.4);
-      "></div>`,
-      className: '',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8],
-    })
-    navPositionMarker = L.marker([pos.lat, pos.lng], { icon, zIndexOffset: 500 }).addTo(leafletMap)
+    navPositionMarker = L.marker([pos.lat, pos.lng], { icon: navIcon, zIndexOffset: 500 }).addTo(leafletMap)
   } else {
     navPositionMarker.setLatLng([pos.lat, pos.lng])
+    navPositionMarker.setIcon(navIcon)
   }
 
-  // Centra la mappa sulla posizione (con padding per il pannello navigazione)
-  leafletMap.panTo([pos.lat, pos.lng], { animate: true, duration: 0.5 })
+  // ── Rotazione mappa: direzione di marcia sempre in alto ───────
+  if (pos.bearing !== null) {
+    lastNavBearing = pos.bearing
+    _setMapRotation(pos.bearing)
+  }
+
+  // Centra sulla posizione, con offset verso il basso per lasciare spazio all'overlay nav
+  leafletMap.panTo([pos.lat, pos.lng], { animate: true, duration: 0.4 })
+}
+
+/** Ruota il container della mappa via CSS (heading-up navigation) */
+const _setMapRotation = (bearing: number) => {
+  if (!mapContainer.value) return
+  if (bearing === 0) {
+    mapContainer.value.style.transform = ''
+    mapContainer.value.style.transition = ''
+  } else {
+    mapContainer.value.style.transition = 'transform 0.4s ease'
+    mapContainer.value.style.transform  = `rotate(${-bearing}deg) scale(1.5)`
+    mapContainer.value.style.transformOrigin = '50% 50%'
+  }
 }
 
 // =============================================

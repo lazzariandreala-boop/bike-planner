@@ -62,7 +62,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   stop: []
-  positionUpdate: [{ lat: number; lng: number; accuracy: number }]
+  positionUpdate: [{ lat: number; lng: number; accuracy: number; bearing: number | null }]
 }>()
 
 // ── Stato navigazione ─────────────────────────────────────────
@@ -141,13 +141,36 @@ onUnmounted(() => {
   speechSynthesis.cancel()
 })
 
+// ── Bearing: heading del dispositivo o calcolato dalle ultime 2 posizioni ──
+let prevLat: number | null = null
+let prevLng: number | null = null
+
+const calcBearing = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180
+  const y = Math.sin(dLng) * Math.cos(φ2)
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng)
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360
+}
+
 // ── Aggiornamento posizione ───────────────────────────────────
 const onPosition = (pos: GeolocationPosition) => {
-  const { latitude: lat, longitude: lng, accuracy } = pos.coords
+  const { latitude: lat, longitude: lng, accuracy, heading } = pos.coords
   userLat.value = lat
   userLng.value = lng
 
-  emit('positionUpdate', { lat, lng, accuracy })
+  // Bearing: usa heading del sensore se disponibile, altrimenti calcola da Δpos
+  let bearing: number | null = null
+  if (heading !== null && !isNaN(heading)) {
+    bearing = heading
+  } else if (prevLat !== null && prevLng !== null) {
+    const dist = haversine(prevLat, prevLng, lat, lng)
+    if (dist > 3) bearing = calcBearing(prevLat, prevLng, lat, lng) // aggiorna solo se ci si è spostati
+  }
+  prevLat = lat
+  prevLng = lng
+
+  emit('positionUpdate', { lat, lng, accuracy, bearing })
 
   // Nearest point on route
   const { idx, dist } = findNearest(lat, lng)
