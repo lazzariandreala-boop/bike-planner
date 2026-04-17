@@ -25,16 +25,16 @@
           </span>
 
           <!-- Icon -->
-          <span class="text-lg flex-shrink-0 select-none">{{ SURFACE_LABELS[element.type]?.icon }}</span>
+          <span class="text-lg flex-shrink-0 select-none">{{ SURFACE_LABELS[element.type as SurfaceType]?.icon }}</span>
 
           <!-- Label -->
           <span class="text-sm flex-1" :style="{ color: isActive(element.type) ? '#e8f0d0' : '#5a9b5a' }">
-            {{ SURFACE_LABELS[element.type]?.it }}
+            {{ SURFACE_LABELS[element.type as SurfaceType]?.it }}
           </span>
 
           <!-- Color dot -->
           <span class="w-2 h-2 rounded-full flex-shrink-0"
-            :style="{ background: SURFACE_LABELS[element.type]?.color, opacity: isActive(element.type) ? 1 : 0.3 }"/>
+            :style="{ background: SURFACE_LABELS[element.type as SurfaceType]?.color, opacity: isActive(element.type) ? 1 : 0.3 }"/>
 
           <!-- Toggle -->
           <button

@@ -23,7 +23,7 @@
         <button v-for="f in filters" :key="f.value"
           class="chip whitespace-nowrap cursor-pointer transition-all"
           :class="{ 'chip-moss': activeFilter === f.value }"
-          @click="activeFilter = f.value">
+          @click="activeFilter = f.value as 'all' | 'favorites' | 'recent'">
           {{ f.label }}
         </button>
       </div>

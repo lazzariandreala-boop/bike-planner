@@ -22,7 +22,12 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'theme-color', content: '#0f1a0f' },
       ],
+      script: [
+        { src: 'https://cdn.jsdelivr.net/npm/maplibre-gl@4/dist/maplibre-gl.js', defer: false },
+      ],
       link: [
+        // MapLibre GL CSS
+        { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/maplibre-gl@4/dist/maplibre-gl.css' },
         // Fonts
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
@@ -34,7 +39,7 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
   },
 
-  css: ['~/assets/css/main.css', 'maplibre-gl/dist/maplibre-gl.css'],
+  css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
     public: {
@@ -104,9 +109,6 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    optimizeDeps: {
-      include: ['maplibre-gl'],
-    },
     define: {
       global: 'globalThis',
     },

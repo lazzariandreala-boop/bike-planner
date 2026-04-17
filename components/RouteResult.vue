@@ -95,12 +95,12 @@
     <div class="px-4 py-3" style="border-top: 1px solid #1e2130;">
       <div class="flex items-center gap-2 mb-2">
         <span class="font-mono text-xs" style="color: #404860;">AI INSIGHT</span>
-        <div v-if="isGeneratingAI" class="spinner !w-3 !h-3"/>
+        <div v-if="isGeneratingAi" class="spinner !w-3 !h-3"/>
       </div>
       <p v-if="route.aiDescription" class="text-xs leading-relaxed italic" style="color: #8b95a8;">
         "{{ route.aiDescription }}"
       </p>
-      <p v-else-if="!isGeneratingAI" class="text-xs" style="color: #404860;">
+      <p v-else-if="!isGeneratingAi" class="text-xs" style="color: #404860;">
         Generazione descrizione AI…
       </p>
     </div>
@@ -148,7 +148,7 @@ const SURFACE_LABELS = useSurfaceLabels()
 
 const props = defineProps<{
   route: Partial<SavedRoute>
-  isGeneratingAI: boolean
+  isGeneratingAi: boolean
   isLoading?: boolean
 }>()
 

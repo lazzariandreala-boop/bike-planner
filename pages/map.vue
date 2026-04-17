@@ -38,7 +38,7 @@
 
       <!-- Toolbar mappa (destra) -->
       <div class="map-toolbar" @click.stop>
-        <button class="map-btn" @click.stop="goToMyLocation">
+        <button class="map-btn" @click.stop="() => goToMyLocation()">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
             <path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -171,27 +171,32 @@ let toastTimer: any = null
 onMounted(async () => {
   isMobileView.value = window.innerWidth < 768
 
-  // Import dinamico per evitare SSR issues
-  const maplibregl = (await import('maplibre-gl')).default
+  // Usa il globale window.maplibregl caricato via CDN (evita problemi di bundling)
+  const ml = (window as any).maplibregl
+  if (!ml) { console.error('maplibregl non trovato su window'); return }
 
   await nextTick()
   if (!mapContainer.value) return
 
-  map = new maplibregl.Map({
+  map = new ml.Map({
     container: mapContainer.value,
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
     center: [11.5, 45.8],
-    zoom: 11,
+    zoom: 5,
     attributionControl: false,
     pitchWithRotate: false,
   })
 
+  map.on('error', (e: any) => {
+    console.error('[MapLibre]', e.error)
+  })
+
   // Attribution compatta
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
+  map.addControl(new ml.AttributionControl({ compact: true }), 'bottom-right')
 
   // Zoom controls solo desktop
   if (!isMobileView.value) {
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), 'bottom-right')
+    map.addControl(new ml.NavigationControl({ showCompass: true, visualizePitch: false }), 'bottom-right')
   }
 
   // Click sulla mappa per impostare punti
@@ -282,11 +287,11 @@ const placeMarker = (type: 'start' | 'end', point: RoutePoint) => {
   _createMarker(el, lng, lat, `<strong style="color:${color}">${label}</strong><br><small>${address || ''}</small>`, type)
 }
 
-// Factory per creare marker MapLibre (gestisce l'import dinamico)
-let _ML: any = null
+// Factory per creare marker MapLibre (usa il globale CDN)
+const _getML = () => (window as any).maplibregl
 const _createMarker = async (el: HTMLElement, lng: number, lat: number, html: string, type: 'start' | 'end') => {
-  if (!_ML) _ML = (await import('maplibre-gl')).default
-  if (!map) return
+  const _ML = _getML()
+  if (!_ML || !map) return
 
   const popup = new _ML.Popup({ offset: 12, closeButton: false })
     .setHTML(html)
@@ -505,8 +510,8 @@ const onStopNavigation = () => {
 
 const onNavPosition = async (pos: { lat: number; lng: number; accuracy: number; bearing: number | null }) => {
   if (!map) return
-
-  if (!_ML) _ML = (await import('maplibre-gl')).default
+  const _ML = _getML()
+  if (!_ML) return
 
   // Crea/aggiorna marker freccia direzionale
   if (!navMarker) {

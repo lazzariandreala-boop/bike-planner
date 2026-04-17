@@ -99,7 +99,7 @@ export const useORS = () => {
       ]
 
       // Per profili cycling, ORS accetta solo: ferries, steps, fords (non highways)
-      const avoidFeatures: ORSRouteRequest['options']['avoid_features'] = []
+      const avoidFeatures: NonNullable<ORSRouteRequest['options']>['avoid_features'] = []
       if (preferences.avoidFerries) avoidFeatures.push('ferries')
 
       const wantsFlat      = preferences.difficulty === 'easy' || preferences.difficulty === 'moderate'

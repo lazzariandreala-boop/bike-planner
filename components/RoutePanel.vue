@@ -157,7 +157,7 @@
             </div>
             <RouteResult
               :route="currentRoute"
-              :is-generating-ai="isGeneratingAI"
+              :is-generating-ai="isGeneratingAi"
               :is-loading="isLoading"
               @save="$emit('save')"
               @reset="$emit('clear')"
@@ -203,7 +203,7 @@
         <div class="flex-1 overflow-y-auto">
           <RouteResult
             :route="currentRoute"
-            :is-generating-ai="isGeneratingAI"
+            :is-generating-ai="isGeneratingAi"
             :is-loading="isLoading"
             @save="$emit('save')"
             @reset="$emit('clear')"
@@ -227,7 +227,7 @@ const props = defineProps<{
   endPoint: RoutePoint | null
   currentRoute: Partial<SavedRoute> | null
   isLoading: boolean
-  isGeneratingAI: boolean
+  isGeneratingAi?: boolean
 }>()
 
 const emit = defineEmits<{
