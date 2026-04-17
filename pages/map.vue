@@ -45,6 +45,15 @@
           </svg>
           <span>Posizione</span>
         </button>
+        <button class="map-btn" :class="{ active: isDarkMap }" @click.stop="toggleMapTheme">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1" stroke-opacity="0.4"/>
+            <path v-if="isDarkMap" d="M8 1a7 7 0 0 0 0 14V1z" fill="currentColor" fill-opacity="0.5"/>
+            <path v-else d="M8 2a6 6 0 1 1-4.2 10.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <span>{{ isDarkMap ? 'Light Mode' : 'Dark Mode' }}</span>
+        </button>
         <button class="map-btn" :class="{ active: showCycleMap }" @click.stop="toggleCycleMap">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="4" cy="11" r="2.5" stroke="currentColor" stroke-width="1.3"/>
@@ -52,7 +61,7 @@
             <path d="M4 11L8 4l4 7" stroke="currentColor" stroke-width="1.3"/>
             <path d="M6 7h4" stroke="currentColor" stroke-width="1.3"/>
           </svg>
-          <span>{{ showCycleMap ? 'Ciclabili ✓' : 'Ciclabili' }}</span>
+          <span>{{ showCycleMap ? 'Ciclabili ✔' : 'Ciclabili ✘' }}</span>
         </button>
       </div>
 
@@ -152,6 +161,11 @@ const SHAD = 'route-shadow'
 
 // Cycling overlay toggle
 const showCycleMap = ref(false)
+
+// Map theme toggle
+const isDarkMap = ref(false)
+const STYLE_LIGHT = 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
+const STYLE_DARK  = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
 
 // Mobile panel toggle
 const isMobileView = ref(false)
@@ -319,6 +333,34 @@ const toggleCycleMap = () => {
   if (!map || !map.getLayer('cycling-layer')) return
   showCycleMap.value = !showCycleMap.value
   map.setLayoutProperty('cycling-layer', 'visibility', showCycleMap.value ? 'visible' : 'none')
+}
+
+const toggleMapTheme = () => {
+  if (!map) return
+  isDarkMap.value = !isDarkMap.value
+  map.setStyle(isDarkMap.value ? STYLE_DARK : STYLE_LIGHT)
+  // Lo stile viene ricaricato: ri-aggiungi sorgenti/layer su styledata
+  map.once('styledata', () => {
+    // Overlay ciclabile
+    if (!map.getSource('cycling-src')) {
+      map.addSource('cycling-src', {
+        type: 'raster',
+        tiles: ['https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '© Waymarked Trails',
+      })
+      map.addLayer({
+        id: 'cycling-layer',
+        type: 'raster',
+        source: 'cycling-src',
+        layout: { visibility: showCycleMap.value ? 'visible' : 'none' },
+        paint: { 'raster-opacity': 0.65 },
+      })
+    }
+    // Ridisegna percorso se presente
+    const coords = routesStore.currentRoute?.geometry?.coordinates
+    if (coords) drawRoute(coords)
+  })
 }
 
 // =============================================
