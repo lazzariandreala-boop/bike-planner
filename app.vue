@@ -5,12 +5,6 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
-
-const authStore = useAuthStore()
-
-// Inizializza Firebase Auth listener all'avvio
-onMounted(() => {
-  authStore.init()
-})
+// Firebase Auth è inizializzato dal plugin plugins/auth.client.ts
+// prima che qualsiasi middleware o pagina venga caricata.
 </script>

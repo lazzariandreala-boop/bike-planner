@@ -21,29 +21,44 @@ export const useAuthStore = defineStore('auth', () => {
   const displayName = computed(() => user.value?.displayName || 'Rider')
   const photoURL = computed(() => user.value?.photoURL || null)
 
-  // Inizializza l'observer Firebase Auth
-  const init = () => {
-    if (initialized.value) return
+  /**
+   * Inizializza Firebase Auth e restituisce una Promise che si risolve
+   * non appena Firebase ha determinato lo stato di login (logged in o out).
+   * Chiamato dal plugin auth.client.ts prima che il middleware giri.
+   */
+  const init = (): Promise<void> => {
+    // Se già inizializzato (es. HMR in dev), risolvi subito
+    if (initialized.value) return Promise.resolve()
 
-    $auth.onAuthStateChanged($firebase.auth, async (firebaseUser: User | null) => {
-      user.value = firebaseUser
-      loading.value = false
-      initialized.value = true
+    return new Promise<void>(resolve => {
+      let resolved = false
 
-      if (firebaseUser) {
-        await loadOrCreateProfile(firebaseUser)
-      } else {
-        profile.value = null
-      }
+      $auth.onAuthStateChanged($firebase.auth, async (firebaseUser: User | null) => {
+        user.value = firebaseUser
+        loading.value = false
+        initialized.value = true
+
+        if (firebaseUser) {
+          await loadOrCreateProfile(firebaseUser)
+        } else {
+          profile.value = null
+        }
+
+        // Risolvi la promise solo al primo callback (non ai successivi cambi di stato)
+        if (!resolved) {
+          resolved = true
+          resolve()
+        }
+      })
+
+      // Gestisci il redirect result (Capacitor native OAuth)
+      $auth.handleRedirectResult().then(async (result: any) => {
+        if (result?.user) {
+          user.value = result.user
+          await loadOrCreateProfile(result.user)
+        }
+      }).catch(console.error)
     })
-
-    // Gestisci il redirect result (Capacitor)
-    $auth.handleRedirectResult().then(async (result: any) => {
-      if (result?.user) {
-        user.value = result.user
-        await loadOrCreateProfile(result.user)
-      }
-    }).catch(console.error)
   }
 
   const loadOrCreateProfile = async (firebaseUser: User) => {
